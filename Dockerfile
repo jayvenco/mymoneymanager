@@ -55,9 +55,9 @@ COPY --from=assets /build/app/static/vendor app/static/vendor
 RUN chmod +x /app/entrypoint.sh && mkdir -p /data /backups
 
 VOLUME ["/data", "/backups"]
-EXPOSE 8080
+EXPOSE 8708
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=4).status == 200 else 1)"
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8708/health', timeout=4).status == 200 else 1)"
 
 ENTRYPOINT ["/app/entrypoint.sh"]

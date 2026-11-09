@@ -11,7 +11,7 @@
   <Project>https://github.com/jayvenco/mymoneymanager</Project>
   <Overview>MyMoneyManager is een zelf gehost huishoudboekje voor twee partners: inkomsten, uitgaven, budgetten, vaste lasten, spaardoelen en uitgebreide rapportages, met aparte en gezamenlijke rekeningen. Eén container met SQLite, geheel Nederlands, werkt volledig offline.</Overview>
   <Category>Productivity: Tools: Finance:</Category>
-  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <WebUI>http://[IP]:[PORT:8708]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/mymoneymanager.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/icon.png</Icon>
   <ExtraParams>--restart=unless-stopped</ExtraParams>
@@ -21,7 +21,7 @@
   <DonateText/>
   <DonateLink/>
   <Requires/>
-  <Config Name="Web-poort" Target="8080" Default="8080" Mode="tcp" Description="Poort van de webinterface (standaard 8080)." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Web-poort" Target="8708" Default="8708" Mode="tcp" Description="Poort van de webinterface (standaard 8708)." Type="Port" Display="always" Required="true" Mask="false">8708</Config>
   <Config Name="Data (database)" Target="/data" Default="/mnt/user/appdata/mymoneymanager/data" Mode="rw" Description="Hier staat de SQLite-database. Gebruik bij voorkeur een share op de cache/pool, bij voorkeur als exclusive share (of /mnt/cache/appdata/...), om FUSE-overhead en WAL-lockproblemen te vermijden." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mymoneymanager/data</Config>
   <Config Name="Back-ups" Target="/backups" Default="/mnt/user/appdata/mymoneymanager/backups" Mode="rw" Description="Hier komen de automatische back-ups. Neem deze map op in de Appdata Backup-plug-in of een offsite sync." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mymoneymanager/backups</Config>
   <Config Name="SECRET_KEY" Target="SECRET_KEY" Default="" Mode="" Description="VERPLICHT. Lange willekeurige tekst voor sessies en CSRF-bescherming (genereer met: openssl rand -hex 32). Zonder dit start de app niet." Type="Variable" Display="always" Required="true" Mask="true"/>

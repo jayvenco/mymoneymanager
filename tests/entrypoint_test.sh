@@ -19,10 +19,10 @@ docker run -d --name mmm-entry-test -e SECRET_KEY=test -e PUID=1234 -e PGID=2345
   -v "mmm-data-$SUFFIX:/data" -v "mmm-bak-$SUFFIX:/backups" "$IMAGE" >/dev/null
 
 for _ in $(seq 1 60); do
-  if docker exec mmm-entry-test python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=2)" 2>/dev/null; then break; fi
+  if docker exec mmm-entry-test python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8708/health',timeout=2)" 2>/dev/null; then break; fi
   sleep 1
 done
-docker exec mmm-entry-test python -c "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=2).read().decode())" \
+docker exec mmm-entry-test python -c "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8708/health',timeout=2).read().decode())" \
   || { docker logs mmm-entry-test; fail "health-check mislukt"; }
 
 owner="$(docker exec mmm-entry-test stat -c '%u:%g' /data/mymoneymanager.db)"

@@ -6,7 +6,7 @@
 # Gebruik (op Unraid, als root):
 #   bash install-unraid.sh
 # Optioneel, via omgevingsvariabelen:
-#   PORT=8080  IMAGE_TAG=latest  HTTPS=false  TZ=Europe/Amsterdam
+#   PORT=8708  IMAGE_TAG=latest  HTTPS=false  TZ=Europe/Amsterdam
 #   APPDATA=/mnt/user/appdata/mymoneymanager   (of /mnt/cache/appdata/... voor een cache-pool)
 #   GHCR_USER=<github-naam> GHCR_TOKEN=<PAT met read:packages>   (alleen nodig als het package privé is)
 set -euo pipefail
@@ -14,7 +14,7 @@ set -euo pipefail
 NAME="${NAME:-MyMoneyManager}"  # gelijk aan de templatenaam, zodat Unraid ze koppelt
 IMAGE="ghcr.io/jayvenco/mymoneymanager:${IMAGE_TAG:-latest}"
 APPDATA="${APPDATA:-/mnt/user/appdata/mymoneymanager}"
-PORT="${PORT:-8080}"
+PORT="${PORT:-8708}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 TZ="${TZ:-Europe/Amsterdam}"
@@ -73,14 +73,14 @@ fi
 
 docker run -d --name "$NAME" \
   --restart unless-stopped \
-  -p "$PORT:8080" \
+  -p "$PORT:8708" \
   -v "$APPDATA/data:/data" \
   -v "$APPDATA/backups:/backups" \
   -e SECRET_KEY="$SECRET_KEY" \
   -e PUID="$PUID" -e PGID="$PGID" -e UMASK=022 \
   -e TZ="$TZ" -e HTTPS="$HTTPS" \
   -l net.unraid.docker.managed=dockerman \
-  -l "net.unraid.docker.webui=http://[IP]:[PORT:8080]/" \
+  -l "net.unraid.docker.webui=http://[IP]:[PORT:8708]/" \
   -l "net.unraid.docker.icon=$ICON" \
   "$IMAGE" >/dev/null
 
@@ -91,7 +91,7 @@ if [ -d /boot/config/plugins/dockerMan ]; then
   if curl -fsSL "$TEMPLATE_URL" -o /tmp/mmm-template.xml; then
     sed -i \
       -e "s|\(<Config Name=\"SECRET_KEY\"[^>]*Mask=\"true\"\)/>|\1>$SECRET_KEY</Config>|" \
-      -e "s|\(Target=\"8080\" Default=\"8080\"[^>]*>\)8080<|\1$PORT<|" \
+      -e "s|\(Target=\"8708\" Default=\"8708\"[^>]*>\)8708<|\1$PORT<|" \
       -e "s|\(Name=\"Data (database)\"[^>]*>\)[^<]*<|\1$APPDATA/data<|" \
       -e "s|\(Name=\"Back-ups\"[^>]*>\)[^<]*<|\1$APPDATA/backups<|" \
       /tmp/mmm-template.xml

@@ -32,9 +32,9 @@ $RUN flask --app wsgi:app db upgrade
 
 # Alleen de webserver draait de achtergrondtaken (herhaaltransacties, back-ups).
 export SCHEDULER_ENABLED=true
-echo "MyMoneyManager: Gunicorn starten op poort 8080 (uid=$PUID gid=$PGID)"
+echo "MyMoneyManager: Gunicorn starten op poort 8708 (uid=$PUID gid=$PGID)"
 exec $RUN gunicorn wsgi:app \
-  --bind 0.0.0.0:8080 \
+  --bind 0.0.0.0:8708 \
   --preload --workers 2 --threads 2 --worker-class gthread \
   --access-logfile - --error-logfile - \
   --timeout 60

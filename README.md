@@ -89,7 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/script
 
 ### 3. Eerste keer starten
 
-Open `http://<unraid-ip>:8080`. De **setup-wizard** verschijnt binnen ongeveer 30 seconden:
+Open `http://<unraid-ip>:8708`. De **setup-wizard** verschijnt binnen ongeveer 30 seconden:
 
 1. Maak je beheerder-login en profiel.
 2. Geef het huishouden een naam en voeg je partner toe (geen login nodig).
@@ -134,7 +134,7 @@ Alle instellingen gaan via omgevingsvariabelen (zie [`.env.example`](.env.exampl
 | `BACKUP_RETENTION_MONTHLY` | `12` | Aantal maandelijkse back-ups |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` of `ERROR` (JSON-logs naar stdout) |
 
-Volumes: `/data` (database) en `/backups`. Poort: `8080`. Healthcheck: `GET /health`.
+Volumes: `/data` (database) en `/backups`. Poort: `8708`. Healthcheck: `GET /health`.
 
 ## Back-up en herstel
 
@@ -166,7 +166,7 @@ Liever vaste versies? Gebruik de tag `1.0.0` (of `1.0`, `1`) in plaats van `late
 
 Zet `HTTPS=true` zodra de app via HTTPS bereikbaar is. De app respecteert `X-Forwarded-For/Proto/Host`.
 
-**Nginx Proxy Manager**: Proxy Host → *Forward Hostname/IP* = Unraid-IP, *Forward Port* = `8080`, SSL-certificaat aanvragen, *Force SSL* aan, *Websockets* niet nodig.
+**Nginx Proxy Manager**: Proxy Host → *Forward Hostname/IP* = Unraid-IP, *Forward Port* = `8708`, SSL-certificaat aanvragen, *Force SSL* aan, *Websockets* niet nodig.
 
 **SWAG** (`/config/nginx/proxy-confs/mymoneymanager.subdomain.conf`):
 
@@ -179,7 +179,7 @@ server {
         include /config/nginx/proxy.conf;
         include /config/nginx/resolver.conf;
         set $upstream_app mymoneymanager;
-        set $upstream_port 8080;
+        set $upstream_port 8708;
         set $upstream_proto http;
         proxy_pass $upstream_proto://$upstream_app:$upstream_port;
     }
@@ -190,11 +190,11 @@ server {
 
 ```caddyfile
 geld.voorbeeld.nl {
-    reverse_proxy mymoneymanager:8080
+    reverse_proxy mymoneymanager:8708
 }
 ```
 
-**Tailscale**: installeer Tailscale op de Unraid-server en open `http://<tailscale-naam>:8080`, of publiceer met `tailscale serve --bg 8080` voor HTTPS (`HTTPS=true`). Zo hoeft er geen poort naar het internet open.
+**Tailscale**: installeer Tailscale op de Unraid-server en open `http://<tailscale-naam>:8708`, of publiceer met `tailscale serve --bg 8708` voor HTTPS (`HTTPS=true`). Zo hoeft er geen poort naar het internet open.
 
 ## Ontwikkelen
 

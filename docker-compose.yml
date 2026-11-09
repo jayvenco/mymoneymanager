@@ -4,7 +4,7 @@ services:
     container_name: mymoneymanager
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8708:8708"
     environment:
       SECRET_KEY: "${SECRET_KEY:?Stel SECRET_KEY in (openssl rand -hex 32)}"
       TZ: "${TZ:-Europe/Amsterdam}"
