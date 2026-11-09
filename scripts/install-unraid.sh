@@ -86,7 +86,7 @@ say "Wachten tot de app klaar is"
 for _ in $(seq 1 60); do
   state="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$NAME" 2>/dev/null || echo onbekend)"
   if [ "$state" = "healthy" ] || [ "$state" = "running" ]; then
-    IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+    IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
     echo
     echo "Klaar! Open http://${IP:-<unraid-ip>}:$PORT  (eerste keer: setup-wizard)"
     exit 0
