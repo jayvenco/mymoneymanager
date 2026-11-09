@@ -1,0 +1,76 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Back-up, import en export · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('settings.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Instellingen</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Back-up, import en export</h1>
+
+<section class="card mb-5" aria-labelledby="h-import">
+  <h2 id="h-import" class="text-lg font-semibold">Transacties importeren (CSV)</h2>
+  <p class="mt-1 text-sm text-slate-500">Importeer een export van ING, Rabobank of ABN AMRO — of koppel de kolommen zelf. Je ziet eerst een voorbeeld met duplicaatdetectie.</p>
+  <a class="btn-primary mt-3" href="{{ url_for('backup.import_start') }}">{{ icon('upload') }} Import starten</a>
+</section>
+
+{% if current_user.is_admin %}
+<section class="card mb-5" aria-labelledby="h-backup">
+  <h2 id="h-backup" class="text-lg font-semibold">Back-up</h2>
+  <p class="mt-1 text-sm text-slate-500">Een back-up is een zip met een consistente kopie van de database en een manifest. Het maken ervan is veilig terwijl de app in gebruik is.</p>
+  <div class="mt-3 flex flex-wrap gap-2">
+    <a class="btn-primary" href="{{ url_for('backup.download_now') }}">{{ icon('download') }} Download back-up</a>
+    <form method="post" action="{{ url_for('backup.create_now') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-secondary">Bewaar back-up op de server</button></form>
+  </div>
+
+  <h3 class="mt-6 font-semibold">Automatische back-ups</h3>
+  <form method="post" action="{{ url_for('backup.save_settings') }}" class="mt-2 grid max-w-2xl gap-3 sm:grid-cols-4" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" name="enabled" value="1" class="h-4 w-4 rounded" {{ 'checked' if settings.enabled }}> Dagelijks automatisch een back-up maken in <code class="num">/backups</code></label>
+    <div><label class="label" for="b-time">Tijdstip</label><input class="input num" id="b-time" name="time" value="{{ settings.time }}" placeholder="03:00"></div>
+    <div><label class="label" for="b-d">Dagelijks bewaren</label><input class="input num" id="b-d" name="daily" type="number" min="0" value="{{ settings.daily }}"></div>
+    <div><label class="label" for="b-w">Wekelijks bewaren</label><input class="input num" id="b-w" name="weekly" type="number" min="0" value="{{ settings.weekly }}"></div>
+    <div><label class="label" for="b-m">Maandelijks bewaren</label><input class="input num" id="b-m" name="monthly" type="number" min="0" value="{{ settings.monthly }}"></div>
+    <div class="sm:col-span-4"><button class="btn-secondary">Opslaan</button></div>
+  </form>
+
+  <h3 class="mt-6 font-semibold">Geschiedenis</h3>
+  <div class="mt-2 overflow-x-auto">
+    <table class="w-full min-w-max text-left text-sm">
+      <thead class="text-xs uppercase tracking-wide text-slate-500"><tr><th class="py-2 pr-4">Datum</th><th class="pr-4">Type</th><th class="pr-4 text-right">Grootte</th><th></th></tr></thead>
+      <tbody>
+        {% for b in backups %}
+        <tr class="border-t border-slate-100 dark:border-slate-800">
+          <td class="num py-2 pr-4">{{ b.created.strftime('%d-%m-%Y %H:%M') }}</td>
+          <td class="pr-4">{{ {'auto': 'Automatisch', 'manual': 'Handmatig', 'safety': 'Veiligheidskopie (vóór restore)'}[b.kind] }}</td>
+          <td class="num pr-4 text-right">{{ fmt_size(b.size) }}</td>
+          <td class="whitespace-nowrap text-right">
+            <a class="btn-ghost !min-h-[36px] !px-2" href="{{ url_for('backup.download_stored', name=b.name) }}" aria-label="Download {{ b.name }}">{{ icon('download') }}</a>
+            <form method="post" action="{{ url_for('backup.restore_check') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="stored" value="{{ b.name }}"><button class="btn-ghost !min-h-[36px] !px-2" aria-label="Herstel {{ b.name }}" title="Herstellen">{{ icon('undo-2') }}</button></form>
+            <form method="post" action="{{ url_for('backup.delete_stored', name=b.name) }}" class="inline" onsubmit="return confirm('Deze back-up verwijderen?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-ghost !min-h-[36px] !px-2 text-red-600" aria-label="Verwijder {{ b.name }}">{{ icon('trash-2') }}</button></form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="4" class="py-6 text-center text-slate-500">Nog geen back-ups op de server.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-3 text-xs text-slate-500">Tip: neem de map <code>/mnt/user/appdata/mymoneymanager/backups</code> op in de Appdata Backup-plug-in of een offsite sync.</p>
+</section>
+
+<section class="card mb-5" aria-labelledby="h-restore">
+  <h2 id="h-restore" class="text-lg font-semibold">Herstellen uit een back-up</h2>
+  <p class="mt-1 text-sm text-slate-500">Upload een back-upzip. Je ziet eerst een samenvatting; na bevestiging wordt er een veiligheidskopie van de huidige gegevens gemaakt en daarna hersteld.</p>
+  <form method="post" action="{{ url_for('backup.restore_check') }}" enctype="multipart/form-data" class="mt-3 flex flex-wrap items-end gap-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="label" for="r-file">Back-upbestand (.zip)</label><input class="input" id="r-file" type="file" name="backup" accept=".zip,application/zip" required></div>
+    <button class="btn-secondary">Controleren</button>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="h-export">
+  <h2 id="h-export" class="text-lg font-semibold">Volledige export</h2>
+  <p class="mt-1 text-sm text-slate-500">Alle gegevens voor mee te nemen of te archiveren. Wachtwoorden en 2FA-geheimen zijn niet opgenomen.</p>
+  <div class="mt-3 flex flex-wrap gap-2">
+    <a class="btn-secondary" href="{{ url_for('backup.export_json') }}">{{ icon('file-text') }} JSON</a>
+    <a class="btn-secondary" href="{{ url_for('backup.export_csv_zip') }}">{{ icon('file-spreadsheet') }} CSV per tabel (zip)</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

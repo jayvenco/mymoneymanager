@@ -1,0 +1,31 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Import · kolommen koppelen · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('backup.import_start') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Opnieuw</a>
+<h1 class="mb-1 text-2xl font-bold tracking-tight">Kolommen koppelen</h1>
+<p class="mb-5 text-sm text-slate-500">Stap 2 van 3 — {{ account.name }} · herkend als <strong>{{ preset_label }}</strong> · {{ parsed.rows|length }} rijen.</p>
+<form method="post" action="{{ url_for('backup.import_preview') }}" class="space-y-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="account_id" value="{{ account.id }}">
+  <div class="card grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for key, label, required in fields %}
+    <div><label class="label" for="map-{{ key }}">{{ label }}{% if required %} *{% endif %}</label>
+      <select class="input" id="map-{{ key }}" name="map_{{ key }}"><option value="">— niet gebruiken —</option>
+        {% for h in parsed.headers %}<option value="{{ h }}" {{ 'selected' if mapping.get(key) == h }}>{{ h }}</option>{% endfor %}</select></div>
+    {% endfor %}
+    <div><label class="label" for="date-format">Datumformaat</label>
+      <select class="input" id="date-format" name="date_format">{% for v, l in date_formats %}<option value="{{ v }}" {{ 'selected' if date_format == v }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="label" for="def-exp">Standaardcategorie uitgaven *</label>
+      <select class="input" id="def-exp" name="default_expense" required><option value="">Kies…</option>
+        {% for p, children in expense_tree %}<option value="{{ p.id }}">{{ p.name }}</option>{% for c in children %}<option value="{{ c.id }}">&nbsp;&nbsp;{{ c.name }}</option>{% endfor %}{% endfor %}</select></div>
+    <div><label class="label" for="def-inc">Standaardcategorie inkomsten *</label>
+      <select class="input" id="def-inc" name="default_income" required><option value="">Kies…</option>
+        {% for p, children in income_tree %}<option value="{{ p.id }}">{{ p.name }}</option>{% for c in children %}<option value="{{ c.id }}">&nbsp;&nbsp;{{ c.name }}</option>{% endfor %}{% endfor %}</select></div>
+    <p class="text-xs text-slate-500 sm:col-span-2 lg:col-span-3">Bij een begunstigde die je al eerder hebt gebruikt, neemt de import automatisch de meest gebruikte categorie over. Je kunt de categorie daarna per transactie aanpassen.</p>
+  </div>
+  <div class="card !p-0 overflow-hidden"><h2 class="px-5 pt-4 font-semibold">Eerste rijen van je bestand</h2>
+    <div class="overflow-x-auto"><table class="mt-2 w-full min-w-max text-left text-xs"><thead class="bg-slate-50 dark:bg-slate-900/60"><tr>{% for h in parsed.headers %}<th class="px-3 py-2">{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in sample %}<tr class="border-t border-slate-100 dark:border-slate-800">{% for cell in row %}<td class="px-3 py-1.5">{{ cell[:60] }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></div>
+  <button class="btn-primary">Voorbeeld tonen</button>
+</form>
+{% endblock %}

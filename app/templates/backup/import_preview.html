@@ -1,0 +1,36 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Import · voorbeeld · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="mb-1 text-2xl font-bold tracking-tight">Voorbeeld</h1>
+<p class="mb-5 text-sm text-slate-500">Stap 3 van 3 — {{ account.name }}. Controleer wat er wordt geïmporteerd.</p>
+<form method="post" action="{{ url_for('backup.import_commit') }}" x-data="{ n: {{ preview.new }} }">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="account_id" value="{{ account.id }}">
+  <input type="hidden" name="date_format" value="{{ date_format }}"><input type="hidden" name="default_expense" value="{{ default_expense or '' }}"><input type="hidden" name="default_income" value="{{ default_income or '' }}">
+  {% for key, value in mapping.items() %}<input type="hidden" name="map_{{ key }}" value="{{ value }}">{% endfor %}
+  <div class="mb-4 grid grid-cols-3 gap-3 text-center">
+    <div class="card !p-3"><p class="num text-2xl font-bold text-emerald-600">{{ preview.new }}</p><p class="text-xs text-slate-500">nieuw</p></div>
+    <div class="card !p-3"><p class="num text-2xl font-bold text-amber-600">{{ preview.duplicates }}</p><p class="text-xs text-slate-500">mogelijke duplicaten</p></div>
+    <div class="card !p-3"><p class="num text-2xl font-bold text-red-600">{{ preview.errors }}</p><p class="text-xs text-slate-500">fouten (overgeslagen)</p></div>
+  </div>
+  <label class="mb-3 flex items-center gap-2 text-sm"><input type="checkbox" name="skip_dupes" value="1" class="h-4 w-4 rounded" checked> Duplicaten overslaan (aanbevolen)</label>
+  <div class="card !p-0 overflow-hidden">
+    <div class="overflow-x-auto"><table class="w-full min-w-max text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60"><tr><th class="py-2 pl-4">Import</th><th class="px-3">Datum</th><th class="px-3">Omschrijving</th><th class="px-3 text-right">Bedrag</th><th class="px-3">Status</th></tr></thead>
+      <tbody>
+        {% for r in preview.rows[:limit] %}
+        <tr class="border-t border-slate-100 dark:border-slate-800 {{ 'bg-red-50/60 dark:bg-red-950/20' if r.error else ('bg-amber-50/60 dark:bg-amber-950/20' if r.duplicate) }}">
+          <td class="py-2 pl-4">{% if not r.error %}<input type="checkbox" class="h-4 w-4 rounded" name="rows" value="{{ r.index }}" {{ 'checked' if not r.duplicate }} aria-label="Rij {{ r.index + 1 }} importeren">{% endif %}</td>
+          <td class="num px-3">{{ r.date|datum if r.date else '—' }}</td>
+          <td class="max-w-xs truncate px-3">{{ r.description or r.payee or '—' }}</td>
+          <td class="num px-3 text-right {{ 'text-emerald-600' if r.cents > 0 }}">{{ (r.cents|abs)|eur if not r.error else '—' }}{{ ' (bij)' if r.cents > 0 and not r.error }}</td>
+          <td class="px-3 text-xs">{% if r.error %}<span class="text-red-700 dark:text-red-300">{{ r.error }}</span>{% elif r.duplicate %}<span class="text-amber-800 dark:text-amber-300">mogelijk duplicaat</span>{% else %}<span class="text-emerald-700 dark:text-emerald-300">nieuw</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody></table></div>
+    {% if preview.rows|length > limit %}<p class="border-t border-slate-100 px-4 py-2 text-xs text-slate-500 dark:border-slate-800">Alleen de eerste {{ limit }} rijen worden getoond; de overige rijen worden met dezelfde regels verwerkt.</p>{% endif %}
+  </div>
+  <div class="mt-4 flex gap-2"><button class="btn-primary">{{ icon('check') }} Importeren</button><a class="btn-ghost" href="{{ url_for('backup.import_start') }}">Annuleren</a></div>
+  <p class="mt-2 text-xs text-slate-500">Alleen aangevinkte rijen op de getoonde pagina worden geïmporteerd; rijen buiten het voorbeeld volgen de duplicaatregel.</p>
+</form>
+{% endblock %}

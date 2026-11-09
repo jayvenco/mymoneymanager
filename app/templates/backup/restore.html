@@ -1,0 +1,24 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Herstellen · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('backup.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Terug</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Back-up herstellen</h1>
+<div class="card max-w-2xl space-y-4">
+  <p class="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{{ icon('alert-triangle') }}<span>Alle huidige gegevens worden vervangen door de inhoud van deze back-up. Er wordt eerst automatisch een veiligheidskopie gemaakt.</span></p>
+  <dl class="grid grid-cols-3 gap-y-2 text-sm">
+    <dt class="text-slate-500">Gemaakt op</dt><dd class="num col-span-2">{{ summary.manifest.created_at.replace('T', ' ') }}</dd>
+    <dt class="text-slate-500">App-versie</dt><dd class="col-span-2">{{ summary.manifest.app_version }}</dd>
+    <dt class="text-slate-500">Schemaversie</dt><dd class="num col-span-2">{{ summary.manifest.schema_version }}{% if summary.newer_than_app == false %} (actueel){% else %} (ouder — wordt automatisch bijgewerkt){% endif %}</dd>
+  </dl>
+  <div><h2 class="mb-1 text-sm font-semibold">Inhoud</h2>
+    <ul class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+      {% for table, n in summary.counts.items() if n %}<li class="flex justify-between"><span class="text-slate-500">{{ table }}</span><span class="num">{{ n }}</span></li>{% endfor %}
+    </ul></div>
+  <form method="post" action="{{ url_for('backup.restore_run') }}" class="space-y-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="token" value="{{ token }}">
+    <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" value="1" class="mt-0.5 h-4 w-4 rounded" required> Ja, vervang de huidige gegevens door deze back-up.</label>
+    <div class="flex gap-2"><button class="btn-danger">Herstellen</button><a class="btn-ghost" href="{{ url_for('backup.index') }}">Annuleren</a></div>
+  </form>
+</div>
+{% endblock %}

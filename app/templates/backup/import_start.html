@@ -1,0 +1,18 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Import · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('backup.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Terug</a>
+<h1 class="mb-1 text-2xl font-bold tracking-tight">Transacties importeren</h1>
+<p class="mb-5 text-sm text-slate-500">Stap 1 van 3 — kies de rekening en het bestand.</p>
+<form method="post" action="{{ url_for('backup.import_map') }}" enctype="multipart/form-data" class="card max-w-xl space-y-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div><label class="label" for="i-acc">Importeren in rekening</label>
+    <select class="input" id="i-acc" name="account_id" required><option value="">Kies…</option>{% for a in accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}</select>
+    {% if not accounts %}<p class="field-error">Je hebt geen rekeningen die je mag beheren.</p>{% endif %}</div>
+  <div><label class="label" for="i-preset">Bankformaat</label>
+    <select class="input" id="i-preset" name="preset"><option value="auto">Automatisch herkennen</option>{% for key, p in presets.items() %}<option value="{{ key }}">{{ p.label }}</option>{% endfor %}</select></div>
+  <div><label class="label" for="i-file">CSV-bestand</label><input class="input" id="i-file" type="file" name="file" accept=".csv,.txt,.tab,text/csv,text/plain" required></div>
+  <button class="btn-primary">Volgende</button>
+</form>
+{% endblock %}

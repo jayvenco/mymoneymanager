@@ -6,6 +6,7 @@
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-2xl font-bold tracking-tight">Transacties</h1>
     <div class="flex gap-2">
+      <a class="btn-secondary" href="{{ url_for('transactions.export_csv', **query) }}">{{ icon('download') }} CSV</a>
       <a class="btn-secondary" href="{{ url_for('categories.list_view') }}">{{ icon('tags') }} Categorieën</a>
       <button class="btn-primary" hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Transactie</button>
     </div>

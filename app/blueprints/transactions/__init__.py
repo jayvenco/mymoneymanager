@@ -389,6 +389,55 @@ def detail(tx_id: int):
     return render_template("transactions/detail.html", **row_context(tx), history=entries)
 
 
+@bp.get("/export.csv")
+@login_required
+def export_csv():
+    """Exporteert de huidige selectie (filters uit de URL); privé-rekeningen blijven buiten beeld."""
+    import csv
+    import io
+
+    from flask import Response
+
+    filters = svc.parse_filters(request.args, current_person())
+    stmt = svc.ordered(svc.build_query(filters), filters)
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(
+        [
+            "Datum",
+            "Type",
+            "Bedrag",
+            "Rekening",
+            "Naar rekening",
+            "Categorie",
+            "Omschrijving",
+            "Begunstigde",
+            "Tags",
+            "Notities",
+        ]
+    )
+    for tx in db.session.execute(stmt).scalars():
+        writer.writerow(
+            [
+                format_date(tx.date),
+                {"income": "Inkomst", "expense": "Uitgave", "transfer": "Overboeking"}[tx.type],
+                format_number(tx.amount_cents),
+                tx.account.name,
+                tx.to_account.name if tx.to_account else "",
+                tx.category.name if tx.category else "",
+                tx.description,
+                tx.payee,
+                ", ".join(t.name for t in tx.tags),
+                tx.notes,
+            ]
+        )
+    return Response(
+        "\ufeff" + out.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="transacties.csv"'},
+    )
+
+
 @bp.get("/tags/zoek")
 @login_required
 def tag_search():
