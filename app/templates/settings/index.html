@@ -3,10 +3,28 @@
 {% block title %}Instellingen · {{ app_name }}{% endblock %}
 {% block content %}
 <h1 class="mb-5 text-2xl font-bold tracking-tight">Instellingen</h1>
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('categories.list_view') }}">{{ icon('tags') }}<span><strong class="block">Categorieën</strong><span class="text-sm text-slate-500">Beheren, kleuren, volgorde</span></span></a>
-  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('categories.tags_view') }}">{{ icon('tag') }}<span><strong class="block">Tags</strong><span class="text-sm text-slate-500">Hernoemen, samenvoegen</span></span></a>
-  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('accounts.list_view') }}">{{ icon('wallet') }}<span><strong class="block">Rekeningen</strong><span class="text-sm text-slate-500">Eigenaar, zichtbaarheid, saldo</span></span></a>
-  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('recurring.list_view') }}">{{ icon('repeat') }}<span><strong class="block">Vaste lasten</strong><span class="text-sm text-slate-500">Terugkerende transacties</span></span></a>
+{% macro tile(endpoint, ic, title, text) %}
+  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for(endpoint) }}">{{ icon(ic) }}<span><strong class="block">{{ title }}</strong><span class="text-sm text-slate-500">{{ text }}</span></span></a>
+{% endmacro %}
+<h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Account</h2>
+<div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {{ tile('settings.profile', 'user', 'Profiel', 'Thema, standaardrekening en persoonsfilter') }}
+  {{ tile('settings.password', 'lock', 'Wachtwoord', 'Wachtwoord wijzigen') }}
+  {{ tile('settings.two_factor', 'shield-check', 'Tweestapsverificatie', 'TOTP met een authenticator-app') }}
 </div>
+<h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Gegevens</h2>
+<div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {{ tile('categories.list_view', 'tags', 'Categorieën', 'Beheren, kleuren, volgorde') }}
+  {{ tile('categories.tags_view', 'tag', 'Tags', 'Hernoemen, samenvoegen') }}
+  {{ tile('accounts.list_view', 'wallet', 'Rekeningen', 'Eigenaar, zichtbaarheid, saldo') }}
+  {{ tile('recurring.list_view', 'repeat', 'Vaste lasten', 'Terugkerende transacties') }}
+  {{ tile('backup.index', 'database', 'Back-up, import en export', 'Back-ups, herstellen, CSV-import') }}
+</div>
+{% if current_user.is_admin %}
+<h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Beheer</h2>
+<div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {{ tile('household.index', 'users', 'Huishouden', 'Naam, financiële maand, leden en logins') }}
+</div>
+{% endif %}
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{{ tile('settings.about', 'info', 'Over', 'Versie en build-informatie') }}</div>
 {% endblock %}

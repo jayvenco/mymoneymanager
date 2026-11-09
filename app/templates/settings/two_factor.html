@@ -1,0 +1,25 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Tweestapsverificatie · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('settings.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Instellingen</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Tweestapsverificatie</h1>
+<div class="card max-w-lg space-y-4">
+  {% if error %}<p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300" role="alert">{{ error }}</p>{% endif %}
+  {% if enabled %}
+    <p class="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">{{ icon('shield-check') }} Tweestapsverificatie is <strong>ingeschakeld</strong>.</p>
+    <form method="post" class="space-y-3" novalidate><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label class="label" for="tf-pw">Wachtwoord (om uit te schakelen)</label><input class="input" id="tf-pw" name="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn-danger">Uitschakelen</button></form>
+  {% else %}
+    <ol class="list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+      <li>Scan de QR-code met een authenticator-app (bijv. Aegis, 2FAS of Google Authenticator).</li>
+      <li>Vul de 6-cijferige code in om te bevestigen.</li></ol>
+    <img src="{{ qr }}" alt="QR-code voor je authenticator-app" class="mx-auto h-56 w-56 rounded-xl bg-white p-2">
+    <p class="text-center text-xs text-slate-500">Lukt scannen niet? Voer deze sleutel handmatig in:<br><code class="num select-all break-all text-sm">{{ secret }}</code></p>
+    <form method="post" class="space-y-3" novalidate><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label class="label" for="tf-code">Code</label><input class="input num text-center text-xl tracking-[0.3em]" id="tf-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></div>
+      <button class="btn-primary">Inschakelen</button></form>
+  {% endif %}
+</div>
+{% endblock %}

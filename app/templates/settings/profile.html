@@ -1,0 +1,20 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Profiel · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('settings.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Instellingen</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Profiel</h1>
+<form method="post" class="card max-w-xl space-y-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <p class="text-sm text-slate-500">Ingelogd als <strong class="text-slate-900 dark:text-slate-100">{{ current_user.username }}</strong>{% if current_user.is_admin %} (beheerder){% endif %}</p>
+  <fieldset><legend class="label">Thema</legend>
+    <div class="flex gap-4">{% for v, l in [('light','Licht'),('dark','Donker'),('system','Systeem')] %}
+      <label class="flex items-center gap-2 text-sm"><input type="radio" name="theme" value="{{ v }}" class="h-4 w-4" {{ 'checked' if current_user.theme_preference == v }} onchange="mmmSetTheme('{{ v }}')"> {{ l }}</label>{% endfor %}</div>
+  </fieldset>
+  <div><label class="label" for="p-person">Standaard persoonsfilter</label>
+    <select class="input" id="p-person" name="person">{% for o in person_opts %}<option value="{{ o.key }}" {{ 'selected' if current_user.default_person_filter == o.key }}>{{ o.label }}</option>{% endfor %}</select></div>
+  <div><label class="label" for="p-acc">Standaardrekening bij nieuwe transacties</label>
+    <select class="input" id="p-acc" name="default_account"><option value="">Laatst gebruikte rekening</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if default_account == a.id }}>{{ a.name }}</option>{% endfor %}</select></div>
+  <button class="btn-primary">Opslaan</button>
+</form>
+{% endblock %}

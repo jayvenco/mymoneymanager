@@ -121,9 +121,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 def _register_blueprints(app: Flask) -> None:
     from .blueprints.accounts import bp as accounts_bp
     from .blueprints.auth import bp as auth_bp
+    from .blueprints.backup import bp as backup_bp
     from .blueprints.budgets import bp as budgets_bp
     from .blueprints.categories import bp as categories_bp
     from .blueprints.goals import bp as goals_bp
+    from .blueprints.household import bp as household_bp
     from .blueprints.recurring import bp as recurring_bp
     from .blueprints.reports import bp as reports_bp
     from .blueprints.settings import bp as settings_bp
@@ -140,6 +142,8 @@ def _register_blueprints(app: Flask) -> None:
         budgets_bp,
         recurring_bp,
         goals_bp,
+        backup_bp,
+        household_bp,
         settings_bp,
     ):
         app.register_blueprint(blueprint)

@@ -1,0 +1,55 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Huishouden · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('settings.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Instellingen</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Huishouden</h1>
+<form method="post" class="card mb-6 grid max-w-2xl gap-4 sm:grid-cols-2" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div><label class="label" for="h-name">Naam</label><input class="input" id="h-name" name="name" value="{{ household.name }}"></div>
+  <div><label class="label" for="h-day">Startdag financiële maand (1–28)</label><input class="input num" id="h-day" name="start_day" type="number" min="1" max="28" value="{{ household.financial_month_start_day }}"></div>
+  <p class="text-xs text-slate-500 sm:col-span-2">Met startdag 25 loopt “november” van 25 oktober t/m 24 november. Alle maandrapporten en budgetten volgen deze instelling.</p>
+  <div class="sm:col-span-2"><button class="btn-primary">Opslaan</button></div>
+</form>
+
+<h2 class="mb-2 text-lg font-semibold">Huishoudleden</h2>
+<ul class="mb-4 space-y-3">
+  {% for m in members %}
+  <li class="card !p-4 {{ 'opacity-60' if m.is_archived }}">
+    <div class="flex flex-wrap items-start gap-3">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style="background-color: {{ m.color }}">{{ m.avatar_initials }}</span>
+      <form method="post" action="{{ url_for('household.update_member', member_id=m.id) }}" class="flex flex-1 flex-wrap items-end gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="min-w-[10rem] flex-1"><label class="label" for="m-{{ m.id }}">Naam</label><input class="input !py-2" id="m-{{ m.id }}" name="name" value="{{ m.name }}"></div>
+        <input type="color" name="color" value="{{ m.color }}" class="h-10 w-12 cursor-pointer rounded-lg border border-slate-300 dark:border-slate-700" aria-label="Kleur van {{ m.name }}">
+        <button class="btn-secondary !min-h-[40px]">Opslaan</button>
+      </form>
+      <form method="post" action="{{ url_for('household.archive_member', member_id=m.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-ghost !min-h-[40px]">{{ icon('archive') }} {{ 'Herstellen' if m.is_archived else 'Archiveren' }}</button></form>
+    </div>
+    <div class="mt-3 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
+      {% if m.user %}
+        <p class="mb-2">Login: <strong>{{ m.user.username }}</strong>{% if m.user.is_admin %} <span class="badge bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">beheerder</span>{% endif %}{% if m.user.totp_secret %} · 2FA aan{% endif %}</p>
+        {% if not m.user.is_admin %}
+        <div class="flex flex-wrap gap-2">
+          <form method="post" action="{{ url_for('household.reset_password', member_id=m.id) }}" class="flex gap-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input class="input !py-2" name="password" type="password" placeholder="Nieuw wachtwoord" autocomplete="new-password" aria-label="Nieuw wachtwoord voor {{ m.name }}"><button class="btn-secondary !min-h-[40px]">Wachtwoord instellen</button></form>
+          <form method="post" action="{{ url_for('household.remove_login', member_id=m.id) }}" onsubmit="return confirm('Login verwijderen? De gegevens van {{ m.name }} blijven bestaan.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-ghost !min-h-[40px] text-red-600">Login verwijderen</button></form>
+        </div>
+        {% endif %}
+      {% else %}
+        <details><summary class="cursor-pointer font-medium text-brand-700 dark:text-brand-300">Login aanmaken</summary>
+          <form method="post" action="{{ url_for('household.create_login', member_id=m.id) }}" class="mt-2 flex flex-wrap items-end gap-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label class="label" for="u-{{ m.id }}">Gebruikersnaam</label><input class="input !py-2" id="u-{{ m.id }}" name="username" autocapitalize="none" autocomplete="off"></div>
+            <div><label class="label" for="pw-{{ m.id }}">Wachtwoord (min. 10 tekens)</label><input class="input !py-2" id="pw-{{ m.id }}" name="password" type="password" autocomplete="new-password"></div>
+            <button class="btn-primary !min-h-[40px]">Aanmaken</button></form>
+          <p class="mt-1 text-xs text-slate-500">Zonder login beheer jij de rekeningen van {{ m.name }} zelf.</p></details>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+<form method="post" action="{{ url_for('household.add_member') }}" class="card flex max-w-xl flex-wrap items-end gap-3"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="min-w-[10rem] flex-1"><label class="label" for="new-m">Nieuw lid</label><input class="input" id="new-m" name="name" placeholder="Naam"></div>
+  <input type="color" name="color" value="#f59e0b" class="h-11 w-12 cursor-pointer rounded-lg border border-slate-300 dark:border-slate-700" aria-label="Kleur">
+  <button class="btn-secondary">{{ icon('plus') }} Toevoegen</button></form>
+{% endblock %}
