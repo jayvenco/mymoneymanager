@@ -11,7 +11,7 @@
 #   GHCR_USER=<github-naam> GHCR_TOKEN=<PAT met read:packages>   (alleen nodig als het package privé is)
 set -euo pipefail
 
-NAME="${NAME:-mymoneymanager}"
+NAME="${NAME:-MyMoneyManager}"  # gelijk aan de templatenaam, zodat Unraid ze koppelt
 IMAGE="ghcr.io/jayvenco/mymoneymanager:${IMAGE_TAG:-latest}"
 APPDATA="${APPDATA:-/mnt/user/appdata/mymoneymanager}"
 PORT="${PORT:-8080}"
@@ -19,6 +19,8 @@ PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 TZ="${TZ:-Europe/Amsterdam}"
 HTTPS="${HTTPS:-false}"
+TEMPLATE_URL="https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/mymoneymanager.xml"
+TEMPLATE_DIR="/boot/config/plugins/dockerMan/templates-user"
 ICON="https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/icon.png"
 
 say() { printf '\n==> %s\n' "$*"; }
@@ -82,12 +84,32 @@ docker run -d --name "$NAME" \
   -l "net.unraid.docker.icon=$ICON" \
   "$IMAGE" >/dev/null
 
+# Template voor de Unraid Docker-tab (Edit / Check for Updates / Apply Update), met jouw waarden ingevuld.
+if [ -d /boot/config/plugins/dockerMan ]; then
+  say "Template installeren voor de Docker-tab"
+  mkdir -p "$TEMPLATE_DIR"
+  if curl -fsSL "$TEMPLATE_URL" -o /tmp/mmm-template.xml; then
+    sed -i \
+      -e "s|\(<Config Name=\"SECRET_KEY\"[^>]*Mask=\"true\"\)/>|\1>$SECRET_KEY</Config>|" \
+      -e "s|\(Target=\"8080\" Default=\"8080\"[^>]*>\)8080<|\1$PORT<|" \
+      -e "s|\(Name=\"Data (database)\"[^>]*>\)[^<]*<|\1$APPDATA/data<|" \
+      -e "s|\(Name=\"Back-ups\"[^>]*>\)[^<]*<|\1$APPDATA/backups<|" \
+      /tmp/mmm-template.xml
+    install -m 600 /tmp/mmm-template.xml "$TEMPLATE_DIR/my-$NAME.xml"
+    rm -f /tmp/mmm-template.xml
+    echo "  $TEMPLATE_DIR/my-$NAME.xml"
+  else
+    echo "  Template downloaden mislukt; de container werkt, maar Edit in de Docker-tab ontbreekt." >&2
+  fi
+fi
+
 say "Wachten tot de app klaar is"
 for _ in $(seq 1 60); do
   state="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$NAME" 2>/dev/null || echo onbekend)"
   if [ "$state" = "healthy" ] || [ "$state" = "running" ]; then
     IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
     echo
+    echo "Zie je de container niet direct? Ververs de Docker-tab."
     echo "Klaar! Open http://${IP:-<unraid-ip>}:$PORT  (eerste keer: setup-wizard)"
     exit 0
   fi

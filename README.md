@@ -81,6 +81,12 @@ Ga in Unraid naar **Docker → Add Container**, kies bij *Template* **MyMoneyMan
 3. Laat `PUID=99` en `PGID=100` staan (Unraid `nobody:users`). Alle bestanden op de host zijn dan van `nobody:users`.
 4. Klik **Apply**.
 
+**Sneller:** het script `scripts/install-unraid.sh` doet stap 2 voor je (mappen, SECRET_KEY, template voor de Docker-tab en de container):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/scripts/install-unraid.sh -o /tmp/install-mmm.sh && bash /tmp/install-mmm.sh
+```
+
 ### 3. Eerste keer starten
 
 Open `http://<unraid-ip>:8080`. De **setup-wizard** verschijnt binnen ongeveer 30 seconden:
