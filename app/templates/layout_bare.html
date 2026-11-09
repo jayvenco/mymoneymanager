@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block body %}
+<main id="main" class="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
+  <div class="mb-6 flex items-center justify-center gap-3">
+    <img src="{{ url_for('static', filename='icons/icon.svg') }}" alt="" class="h-11 w-11">
+    <span class="text-2xl font-bold tracking-tight">{{ app_name }}</span>
+  </div>
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}

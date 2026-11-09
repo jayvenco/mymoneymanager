@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Instellen · {{ app_name }}{% endblock %}
+{% block body %}
+<main id="main" class="mx-auto min-h-screen w-full max-w-2xl px-4 py-8"
+      x-data="setupWizard({{ ({'errors': errors, 'form': {'accounts': form.get('accounts', '')}}) | tojson | forceescape }})">
+  <div class="mb-6 flex items-center gap-3">
+    <img src="{{ url_for('static', filename='icons/icon.svg') }}" alt="" class="h-11 w-11">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Welkom bij {{ app_name }}</h1>
+      <p class="text-sm text-slate-600 dark:text-slate-300">In vier korte stappen is je huishouden klaar.</p>
+    </div>
+  </div>
+
+  <ol class="mb-6 flex gap-2" aria-label="Voortgang">
+    <template x-for="(label, i) in steps" :key="i">
+      <li class="flex-1">
+        <div class="h-1.5 rounded-full" :class="i <= step ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-800'"></div>
+        <p class="mt-1 hidden text-xs sm:block" :class="i === step ? 'font-semibold' : 'text-slate-500'" x-text="label"></p>
+      </li>
+    </template>
+  </ol>
+
+  {% if errors %}
+    <div class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300" role="alert">
+      Controleer de gemarkeerde velden:
+      <ul class="mt-1 list-disc pl-5">{% for msg in errors.values() %}<li>{{ msg }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-6" novalidate @submit="prepare">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="accounts" :value="JSON.stringify(accounts)">
+
+    {# Stap 1: beheerder #}
+    <section class="card space-y-4" x-show="step === 0" aria-labelledby="s1">
+      <h2 id="s1" class="text-lg font-semibold">1. Jouw account</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label" for="admin_name">Jouw naam</label>
+          <input class="input" id="admin_name" name="admin_name" value="{{ form.get('admin_name', '') }}" autocomplete="name">
+          {{ field_error(errors, 'admin_name') }}
+        </div>
+        <div>
+          <label class="label" for="admin_color">Jouw kleur</label>
+          <input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="admin_color" name="admin_color" type="color" value="{{ form.get('admin_color', '#4f46e5') }}">
+        </div>
+        <div>
+          <label class="label" for="username">Gebruikersnaam</label>
+          <input class="input" id="username" name="username" value="{{ form.get('username', '') }}" autocomplete="username" autocapitalize="none">
+          {{ field_error(errors, 'username') }}
+        </div>
+        <div></div>
+        <div>
+          <label class="label" for="password">Wachtwoord (min. 10 tekens)</label>
+          <input class="input" id="password" name="password" type="password" autocomplete="new-password">
+          {{ field_error(errors, 'password') }}
+        </div>
+        <div>
+          <label class="label" for="password2">Herhaal wachtwoord</label>
+          <input class="input" id="password2" name="password2" type="password" autocomplete="new-password">
+        </div>
+      </div>
+    </section>
+
+    {# Stap 2: huishouden #}
+    <section class="card space-y-4" x-show="step === 1" x-cloak aria-labelledby="s2">
+      <h2 id="s2" class="text-lg font-semibold">2. Huishouden en partner</h2>
+      <div>
+        <label class="label" for="household_name">Naam van het huishouden</label>
+        <input class="input" id="household_name" name="household_name" value="{{ form.get('household_name', '') }}" placeholder="Bijv. Familie Jansen">
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label" for="partner_name">Naam partner</label>
+          <input class="input" id="partner_name" name="partner_name" value="{{ form.get('partner_name', '') }}">
+          {{ field_error(errors, 'partner_name') }}
+        </div>
+        <div>
+          <label class="label" for="partner_color">Kleur partner</label>
+          <input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="partner_color" name="partner_color" type="color" value="{{ form.get('partner_color', '#ec4899') }}">
+        </div>
+      </div>
+      <p class="text-sm text-slate-500">Je partner hoeft niet in te loggen; later kun je via Instellingen een login aanmaken.</p>
+    </section>
+
+    {# Stap 3: financiële maand #}
+    <section class="card space-y-4" x-show="step === 2" x-cloak aria-labelledby="s3">
+      <h2 id="s3" class="text-lg font-semibold">3. Financiële maand</h2>
+      <div>
+        <label class="label" for="start_day">Startdag van de maand (1–28)</label>
+        <input class="input num max-w-[8rem]" id="start_day" name="start_day" type="number" min="1" max="28" value="{{ form.get('start_day', '1') }}">
+        {{ field_error(errors, 'start_day') }}
+      </div>
+      <p class="text-sm text-slate-500">Krijg je salaris op de 25e? Kies dan 25: de maand “november” loopt dan van 25 oktober t/m 24 november. Kies 1 voor gewone kalendermaanden.</p>
+    </section>
+
+    {# Stap 4: rekeningen #}
+    <section class="card space-y-4" x-show="step === 3" x-cloak aria-labelledby="s4">
+      <h2 id="s4" class="text-lg font-semibold">4. Rekeningen</h2>
+      <p class="text-sm text-slate-500">Optioneel: je kunt deze stap overslaan en later rekeningen toevoegen. Standaardcategorieën worden automatisch aangemaakt.</p>
+      {{ field_error(errors, 'accounts') }}
+      <template x-for="(a, i) in accounts" :key="i">
+        <div class="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div><label class="label" :for="'an'+i">Naam</label><input class="input" :id="'an'+i" x-model="a.name" placeholder="Betaalrekening"></div>
+            <div><label class="label" :for="'ab'+i">Bank</label><input class="input" :id="'ab'+i" x-model="a.bank" placeholder="ING"></div>
+            <div><label class="label" :for="'ao'+i">Eigenaar</label>
+              <select class="input" :id="'ao'+i" x-model="a.owner">
+                <option value="admin">Ik</option><option value="partner">Partner</option><option value="joint">Gezamenlijk</option>
+              </select></div>
+            <div><label class="label" :for="'at'+i">Type</label>
+              <select class="input" :id="'at'+i" x-model="a.type">
+                <option value="checking">Betaalrekening</option><option value="savings">Spaarrekening</option>
+                <option value="investment">Beleggen</option><option value="cash">Contant</option>
+              </select></div>
+            <div><label class="label" :for="'ab2'+i">Beginsaldo (€)</label><input class="input num" :id="'ab2'+i" x-model="a.opening_balance" inputmode="decimal" placeholder="0,00"></div>
+            <div><label class="label" :for="'ad'+i">Per datum</label><input class="input" :id="'ad'+i" type="date" x-model="a.opening_date"></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="h-4 w-4 rounded" :checked="a.visibility === 'private'" @change="a.visibility = $event.target.checked ? 'private' : 'shared'"> Privé (alleen eigenaar en beheerder)</label>
+            <button type="button" class="btn-ghost text-red-600" @click="accounts.splice(i, 1)" aria-label="Rekening verwijderen">Verwijderen</button>
+          </div>
+        </div>
+      </template>
+      <button type="button" class="btn-secondary" @click="addAccount()">+ Rekening toevoegen</button>
+    </section>
+
+    <div class="flex items-center justify-between">
+      <button type="button" class="btn-ghost" x-show="step > 0" @click="step--">Vorige</button>
+      <span x-show="step === 0"></span>
+      <button type="button" class="btn-primary" x-show="step < steps.length - 1" @click="step++">Volgende</button>
+      <button class="btn-primary" x-show="step === steps.length - 1" x-cloak>Afronden</button>
+    </div>
+  </form>
+</main>
+{% endblock %}

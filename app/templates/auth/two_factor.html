@@ -1,0 +1,16 @@
+{% extends "layout_bare.html" %}
+{% block title %}Verificatie · {{ app_name }}{% endblock %}
+{% block content %}
+<form method="post" class="card space-y-4" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h1 class="text-xl font-semibold">Tweestapsverificatie</h1>
+  <p class="text-sm text-slate-600 dark:text-slate-300">Vul de 6-cijferige code uit je authenticator-app in.</p>
+  {% if error %}<p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300" role="alert">{{ error }}</p>{% endif %}
+  <div>
+    <label class="label" for="code">Code</label>
+    <input class="input num text-center text-2xl tracking-[0.4em]" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required autofocus>
+  </div>
+  <button class="btn-primary w-full">Bevestigen</button>
+  <a class="btn-ghost w-full" href="{{ url_for('auth.login') }}">Annuleren</a>
+</form>
+{% endblock %}

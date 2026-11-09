@@ -1,0 +1,19 @@
+{% extends "layout_bare.html" %}
+{% block title %}Inloggen · {{ app_name }}{% endblock %}
+{% block content %}
+<form method="post" class="card space-y-4" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h1 class="text-xl font-semibold">Inloggen</h1>
+  {% if error %}<p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300" role="alert">{{ error }}</p>{% endif %}
+  <div>
+    <label class="label" for="username">Gebruikersnaam</label>
+    <input class="input" id="username" name="username" autocomplete="username" autocapitalize="none" required autofocus value="{{ request.form.get('username', '') }}">
+  </div>
+  <div>
+    <label class="label" for="password">Wachtwoord</label>
+    <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+  </div>
+  <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="remember" class="h-4 w-4 rounded"> Ingelogd blijven</label>
+  <button class="btn-primary w-full">Inloggen</button>
+</form>
+{% endblock %}

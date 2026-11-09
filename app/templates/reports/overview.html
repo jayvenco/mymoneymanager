@@ -1,0 +1,14 @@
+{% extends "layout_app.html" %}
+{% block title %}Rapportages · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold tracking-tight">Welkom bij {{ household.name }}</h1>
+<p class="mt-1 text-slate-600 dark:text-slate-300">De rapportages verschijnen hier zodra er transacties zijn.</p>
+<div class="mt-6 grid gap-4 sm:grid-cols-2">
+  {% for m in members %}
+    <div class="card flex items-center gap-3">
+      <span class="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style="background-color: {{ m.color }}">{{ m.avatar_initials }}</span>
+      <div><p class="font-semibold">{{ m.name }}</p><p class="text-sm text-slate-500">Huishoudlid</p></div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

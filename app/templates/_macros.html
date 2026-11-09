@@ -1,0 +1,17 @@
+{% macro icon(name, cls='') -%}
+<svg class="icon {{ cls }}" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='vendor/icons.svg') }}#{{ name }}"></use></svg>
+{%- endmacro %}
+
+{% macro field_error(errors, key) -%}
+{% if errors and errors.get(key) %}<p class="field-error" role="alert">{{ errors[key] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro member_badge(member) -%}
+{% if member %}
+<span class="badge" style="background-color: {{ member.color }}22; color: {{ member.color }}">
+  <span class="inline-block h-2 w-2 rounded-full" style="background-color: {{ member.color }}"></span>{{ member.name }}
+</span>
+{% else %}
+<span class="badge bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">Gezamenlijk</span>
+{% endif %}
+{%- endmacro %}

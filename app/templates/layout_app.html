@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block body %}
+<div class="flex min-h-screen" x-data="{ collapsed: localStorage.getItem('mmm-nav') === '1' }"
+     x-effect="try { localStorage.setItem('mmm-nav', collapsed ? '1' : '0') } catch (e) {}">
+  {# Zijbalk (desktop) #}
+  <aside class="sticky top-0 hidden h-screen shrink-0 flex-col border-r border-slate-200 bg-white p-3 transition-all dark:border-slate-800 dark:bg-slate-900 md:flex"
+         :class="collapsed ? 'w-[68px]' : 'w-60'" aria-label="Hoofdnavigatie">
+    <div class="mb-4 flex items-center gap-2 px-2 pt-2">
+      <img src="{{ url_for('static', filename='icons/icon.svg') }}" alt="" class="h-8 w-8">
+      <span class="text-lg font-bold tracking-tight" x-show="!collapsed">{{ app_name }}</span>
+    </div>
+    <nav class="flex flex-1 flex-col gap-1">
+      {% for item in nav_items %}
+        <a class="nav-link" href="{{ url_for(item.endpoint) }}"
+           {% if request.blueprint == item.endpoint.split('.')[0] %}aria-current="page"{% endif %}
+           title="{{ item.label }}">
+          {{ icon(item.icon) }}<span x-show="!collapsed">{{ item.label }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+    <button type="button" class="nav-link" @click="collapsed = !collapsed" :aria-label="collapsed ? 'Menu uitklappen' : 'Menu inklappen'">
+      {{ icon('chevron-left') }}<span x-show="!collapsed">Inklappen</span>
+    </button>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    {# Header #}
+    <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+      <div class="flex min-w-0 items-center gap-3">
+        <span class="font-semibold md:hidden">{{ app_name }}</span>
+        {% block header_left %}{% endblock %}
+      </div>
+      <div class="flex items-center gap-2">
+        {% block header_right %}{% endblock %}
+        <div x-data="{ open: false }" class="relative">
+          <button type="button" class="btn-ghost !min-h-[40px] !px-2" @click="open = !open" aria-label="Thema kiezen" aria-haspopup="true" :aria-expanded="open">
+            {{ icon('sun', 'dark:hidden') }}{{ icon('moon', 'hidden dark:inline-block') }}
+          </button>
+          <div x-cloak x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            {% for value, label in [('light','Licht'),('dark','Donker'),('system','Systeem')] %}
+              <button type="button" class="nav-link w-full" onclick="mmmSetTheme('{{ value }}')" @click="open = false">{{ label }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn-ghost !min-h-[40px] !px-2" aria-label="Uitloggen" title="Uitloggen">{{ icon('log-out') }}</button>
+        </form>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-28 md:pb-10">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {# Navigatie onderin (mobiel) #}
+  <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-900 md:hidden"
+       style="grid-template-columns: repeat({{ nav_items|length }}, minmax(0, 1fr));" aria-label="Hoofdnavigatie">
+    {% for item in nav_items %}
+      <a href="{{ url_for(item.endpoint) }}" class="flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-slate-500 aria-[current=page]:text-brand-700 dark:text-slate-400 dark:aria-[current=page]:text-brand-300"
+         {% if request.blueprint == item.endpoint.split('.')[0] %}aria-current="page"{% endif %}>
+        {{ icon(item.icon) }}<span class="truncate">{{ item.label }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+</div>
+{% endblock %}
