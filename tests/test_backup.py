@@ -187,65 +187,68 @@ def test_inspect_rejects_bad_files(mapp, mclient):
             svc.inspect_backup(corrupt.getvalue())
 
 
-def fake(kind, when):
-    from pathlib import Path
-
-    return svc.BackupFile(f"x-{when:%Y%m%d%H%M%S}", Path("/nonexistent"), kind, when, 1)
-
-
-def test_retention_keeps_daily_weekly_monthly():
-    now = datetime(2026, 11, 9, 3, 0)
-    files = [fake("auto", now - timedelta(days=d)) for d in range(0, 200)]
-    keep = svc.select_to_keep(files, daily=14, weekly=8, monthly=12)
-    kept = sorted((f for f in files if f.name in keep), key=lambda f: f.created, reverse=True)
-    newest14 = {f.name for f in files[:14]}
-    assert newest14 <= keep
-    assert len({f.created.date() for f in kept}) == len(kept)  # één per dag
-    assert 14 < len(kept) <= 14 + 8 + 12
-    months = {(f.created.year, f.created.month) for f in kept}
-    assert len(months) >= 7  # maanden verspreid door 200 dagen
-
-
-def test_apply_retention_only_touches_auto_backups(mapp, mclient):
+def test_retention_removes_only_old_auto_backups(mapp, mclient):
     from pathlib import Path
 
     with mapp.app_context():
-        svc.save_settings(True, "03:00", 2, 0, 0)
         folder = mapp.config["BACKUP_DIR"]
-        base = datetime(2026, 1, 1, 3, 0)
-        for d in range(5):
-            stamp = (base + timedelta(days=d)).strftime("%Y%m%d-%H%M%S")
+        now = datetime(2026, 11, 9, 3, 0)
+        for days in (0, 30, 359, 361, 500):
+            stamp = (now - timedelta(days=days)).strftime("%Y%m%d-%H%M%S")
             (folder / f"mymoneymanager-{stamp}-auto.zip").write_bytes(b"x")
-        (folder / "mymoneymanager-20250101-030000-manual.zip").write_bytes(b"x")
-        (folder / "mymoneymanager-20250101-030000-safety.zip").write_bytes(b"x")
+        (folder / "mymoneymanager-20240101-030000-manual.zip").write_bytes(b"x")
+        (folder / "mymoneymanager-20240101-030000-safety.zip").write_bytes(b"x")
         (folder / "andere-bestand.zip").write_bytes(b"x")
-        removed = svc.apply_retention()
-        assert len(removed) == 3
+        assert svc.get_settings().keep_days == 360  # standaard
+        removed = svc.apply_retention(now=now)
+        assert len(removed) == 2  # 361 en 500 dagen oud
         names = {p.name for p in Path(folder).iterdir()}
         assert (
-            "mymoneymanager-20250101-030000-manual.zip" in names and "andere-bestand.zip" in names
+            "mymoneymanager-20240101-030000-manual.zip" in names and "andere-bestand.zip" in names
         )
-        assert (
-            "mymoneymanager-20260105-030000-auto.zip" in names
-            and "mymoneymanager-20260104-030000-auto.zip" in names
-        )
+        assert sum(n.endswith("-auto.zip") for n in names) == 3
+        svc.save_settings(True, "monthly", "03:00", 1)
+        svc.apply_retention(now=now)  # de nieuwste auto-backup blijft altijd staan
+        assert sum(n.endswith("-auto.zip") for n in {p.name for p in Path(folder).iterdir()}) == 1
 
 
-def test_auto_backup_runs_once_a_day_at_configured_time(mapp, mclient):
+def test_default_is_monthly_with_360_days(mapp, mclient):
     with mapp.app_context():
-        svc.save_settings(True, "03:00", 14, 8, 12)
-        early = datetime(2026, 5, 5, 2, 59)
-        late = datetime(2026, 5, 5, 3, 1)
-        assert svc.run_auto_backup(mapp, early) is None
-        path = svc.run_auto_backup(mapp, late)
-        assert path is not None and path.name.endswith("-auto.zip")
-        assert svc.auto_backup_due(late) is False  # vandaag al gedaan
-        assert svc.run_auto_backup(mapp, late) is None
-        assert svc.auto_backup_due(datetime(2026, 5, 6, 3, 1)) is True  # morgen weer
-        svc.save_settings(False, "03:00", 14, 8, 12)
+        s = svc.get_settings()
+        assert (s.frequency, s.keep_days, s.enabled) == ("monthly", 360, True)
+
+
+def test_auto_backup_frequencies(mapp, mclient):
+    with mapp.app_context():
+        svc.save_settings(True, "monthly", "03:00", 360)
+        assert svc.run_auto_backup(mapp, datetime(2026, 5, 5, 2, 59)) is None  # nog te vroeg
+        assert svc.run_auto_backup(mapp, datetime(2026, 5, 5, 3, 1)) is not None  # eerste keer
+        assert svc.auto_backup_due(datetime(2026, 5, 31, 12, 0)) is False  # zelfde maand
+        assert svc.auto_backup_due(datetime(2026, 6, 1, 3, 1)) is True  # nieuwe maand
+        svc.save_settings(True, "weekly", "03:00", 360)
+        assert svc.auto_backup_due(datetime(2026, 5, 11, 3, 1)) is False
+        assert svc.auto_backup_due(datetime(2026, 5, 12, 3, 1)) is True
+        svc.save_settings(True, "daily", "03:00", 360)
+        assert svc.auto_backup_due(datetime(2026, 5, 5, 23, 0)) is False
+        assert svc.auto_backup_due(datetime(2026, 5, 6, 3, 1)) is True
+        svc.save_settings(False, "daily", "03:00", 360)
         assert svc.auto_backup_due(datetime(2030, 1, 1, 12, 0)) is False
-        with pytest.raises(svc.BackupError):
-            svc.save_settings(True, "25:99", 1, 1, 1)
+        for bad in (("x", "03:00", 360), ("daily", "25:99", 360), ("daily", "03:00", 0)):
+            with pytest.raises(svc.BackupError):
+                svc.save_settings(True, *bad)
+
+
+def test_settings_form_saves(mapp, mclient):
+    resp = mclient.post(
+        "/gegevens/backup/instellingen",
+        data={"enabled": "1", "frequency": "weekly", "time": "04:30", "keep_days": "90"},
+    )
+    assert resp.status_code == 302
+    with mapp.app_context():
+        s = svc.get_settings()
+        assert (s.frequency, s.time, s.keep_days) == ("weekly", "04:30", 90)
+    page = mclient.get("/gegevens/").get_data(as_text=True)
+    assert 'value="90"' in page and "Bewaren (dagen)" in page
 
 
 def test_backup_routes_admin_only(mapp, mclient):

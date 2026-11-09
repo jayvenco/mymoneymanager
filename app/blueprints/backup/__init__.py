@@ -49,7 +49,12 @@ def _fmt_size(size: int) -> str:
 def index():
     ctx = {"can_import": True}
     if current_user.is_admin:
-        ctx.update(settings=svc.get_settings(), backups=svc.list_backups(), fmt_size=_fmt_size)
+        ctx.update(
+            settings=svc.get_settings(),
+            backups=svc.list_backups(),
+            fmt_size=_fmt_size,
+            frequencies=svc.FREQUENCIES,
+        )
     return render_template("backup/index.html", **ctx)
 
 
@@ -82,10 +87,9 @@ def save_settings():
     try:
         svc.save_settings(
             enabled=request.form.get("enabled") == "1",
+            frequency=request.form.get("frequency", ""),
             time=request.form.get("time", ""),
-            daily=int(request.form.get("daily", "0") or 0),
-            weekly=int(request.form.get("weekly", "0") or 0),
-            monthly=int(request.form.get("monthly", "0") or 0),
+            keep_days=int(request.form.get("keep_days", "0") or 0),
         )
         svc.apply_retention()
         flash("Back-upinstellingen opgeslagen.", "success")

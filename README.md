@@ -130,10 +130,9 @@ Alle instellingen gaan via omgevingsvariabelen (zie [`.env.example`](.env.exampl
 | `UMASK` | `022` | Umask voor nieuwe bestanden |
 | `HTTPS` | `false` | `true` achter HTTPS: Secure-cookies en HSTS |
 | `SESSION_LIFETIME_DAYS` | `7` | Geldigheid van een login in dagen |
-| `BACKUP_TIME` | `03:00` | Standaardtijdstip van de dagelijkse back-up (aanpasbaar in de app) |
-| `BACKUP_RETENTION_DAILY` | `14` | Aantal dagelijkse back-ups dat bewaard blijft |
-| `BACKUP_RETENTION_WEEKLY` | `8` | Aantal wekelijkse back-ups |
-| `BACKUP_RETENTION_MONTHLY` | `12` | Aantal maandelijkse back-ups |
+| `BACKUP_TIME` | `03:00` | Standaardtijdstip van de automatische back-up (aanpasbaar in de app) |
+| `BACKUP_FREQUENCY` | `monthly` | `daily`, `weekly` of `monthly` (ook in de app instelbaar) |
+| `BACKUP_RETENTION_DAYS` | `360` | Automatische back-ups ouder dan dit aantal dagen worden verwijderd |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` of `ERROR` (JSON-logs naar stdout) |
 
 Volumes: `/data` (database) en `/backups`. Poort: `8708`. Healthcheck: `GET /health`.
@@ -143,7 +142,7 @@ Volumes: `/data` (database) en `/backups`. Poort: `8708`. Healthcheck: `GET /hea
 **Back-up maken** — *Instellingen → Back-up, import en export*:
 
 * *Download back-up*: een `.zip` met een consistente databasekopie (online backup API, veilig tijdens gebruik) en `manifest.json` (appversie, schemaversie, tijdstip, aantal records per tabel).
-* *Automatisch*: dagelijks op het ingestelde tijdstip naar `/backups`; retentie 14 dagelijks / 8 wekelijks / 12 maandelijks (instelbaar). Handmatige en veiligheidskopieën worden nooit automatisch verwijderd.
+* *Automatisch*: standaard **maandelijks** (de eerste keer na het ingestelde tijdstip in een nieuwe maand) naar `/backups`, en **360 dagen bewaard**. Frequentie (dagelijks/wekelijks/maandelijks), tijdstip en bewaartermijn zijn in de app instelbaar. De nieuwste automatische back-up blijft altijd staan; handmatige en veiligheidskopieën worden nooit automatisch verwijderd.
 
 **Herstellen** (alleen beheerder):
 

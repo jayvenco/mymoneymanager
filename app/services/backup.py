@@ -32,45 +32,44 @@ class BackupError(Exception):
 # --- instellingen -------------------------------------------------------------------------------
 
 
+FREQUENCIES = {"daily": "Dagelijks", "weekly": "Wekelijks", "monthly": "Maandelijks"}
+
+
 @dataclass
 class BackupSettings:
     enabled: bool
+    frequency: str  # daily | weekly | monthly
     time: str
-    daily: int
-    weekly: int
-    monthly: int
+    keep_days: int
 
 
 def get_settings(app: Flask | None = None) -> BackupSettings:
     cfg = (app or current_app).config
-
-    def number(key: str, fallback: int) -> int:
-        try:
-            return max(0, int(AppSetting.get(key, str(fallback)) or fallback))
-        except ValueError:
-            return fallback
-
+    try:
+        keep = int(AppSetting.get("backup_keep_days", str(cfg["BACKUP_RETENTION_DAYS"])) or 0)
+    except ValueError:
+        keep = cfg["BACKUP_RETENTION_DAYS"]
     raw_time = AppSetting.get("backup_time", cfg["BACKUP_TIME"]) or "03:00"
+    frequency = AppSetting.get("backup_frequency", cfg["BACKUP_FREQUENCY"])
     return BackupSettings(
         enabled=(AppSetting.get("backup_enabled", "1") == "1"),
+        frequency=frequency if frequency in FREQUENCIES else "monthly",
         time=raw_time if re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", raw_time) else "03:00",
-        daily=number("backup_retention_daily", cfg["BACKUP_RETENTION_DAILY"]),
-        weekly=number("backup_retention_weekly", cfg["BACKUP_RETENTION_WEEKLY"]),
-        monthly=number("backup_retention_monthly", cfg["BACKUP_RETENTION_MONTHLY"]),
+        keep_days=max(1, keep),
     )
 
 
-def save_settings(enabled: bool, time: str, daily: int, weekly: int, monthly: int) -> None:
+def save_settings(enabled: bool, frequency: str, time: str, keep_days: int) -> None:
     if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", time):
         raise BackupError("Gebruik een tijd als 03:00.")
-    for label, value in (("dagelijks", daily), ("wekelijks", weekly), ("maandelijks", monthly)):
-        if not 0 <= value <= 3650:
-            raise BackupError(f"Bewaartermijn ({label}) moet tussen 0 en 3650 liggen.")
+    if frequency not in FREQUENCIES:
+        raise BackupError("Kies dagelijks, wekelijks of maandelijks.")
+    if not 1 <= keep_days <= 3650:
+        raise BackupError("Bewaartermijn moet tussen 1 en 3650 dagen liggen.")
     AppSetting.put("backup_enabled", "1" if enabled else "0")
+    AppSetting.put("backup_frequency", frequency)
     AppSetting.put("backup_time", time)
-    AppSetting.put("backup_retention_daily", str(daily))
-    AppSetting.put("backup_retention_weekly", str(weekly))
-    AppSetting.put("backup_retention_monthly", str(monthly))
+    AppSetting.put("backup_keep_days", str(keep_days))
     db.session.commit()
 
 
@@ -184,35 +183,17 @@ def backup_by_name(name: str, app: Flask | None = None) -> BackupFile | None:
     return next((b for b in list_backups(app) if b.name == name), None)
 
 
-def select_to_keep(files: list[BackupFile], daily: int, weekly: int, monthly: int) -> set[str]:
-    """Bewaar de nieuwste per dag (daily), per ISO-week (weekly) en per maand (monthly)."""
-    keep: set[str] = set()
-    for limit, key in (
-        (daily, lambda b: b.created.date()),
-        (weekly, lambda b: b.created.isocalendar()[:2]),
-        (monthly, lambda b: (b.created.year, b.created.month)),
-    ):
-        seen: list = []
-        for b in sorted(files, key=lambda b: b.created, reverse=True):  # nieuwste eerst
-            k = key(b)
-            if k in seen:
-                continue
-            if len(seen) >= limit:
-                break
-            seen.append(k)
-            keep.add(b.name)
-    return keep
+def apply_retention(app: Flask | None = None, now: datetime | None = None) -> list[str]:
+    """Verwijdert automatische back-ups ouder dan de bewaartermijn (de nieuwste blijft altijd staan).
 
-
-def apply_retention(app: Flask | None = None) -> list[str]:
-    """Verwijdert automatische back-ups buiten de bewaartermijn. Handmatige blijven staan."""
+    Handmatige en veiligheidskopieën worden nooit automatisch verwijderd.
+    """
     app = app or current_app
-    s = get_settings(app)
-    auto = [b for b in list_backups(app) if b.kind == "auto"]
-    keep = select_to_keep(auto, s.daily, s.weekly, s.monthly)
+    cutoff = (now or datetime.now()) - timedelta(days=get_settings(app).keep_days)
+    auto = [b for b in list_backups(app) if b.kind == "auto"]  # nieuwste eerst
     removed = []
-    for b in auto:
-        if b.name not in keep:
+    for b in auto[1:]:
+        if b.created < cutoff:
             b.path.unlink(missing_ok=True)
             removed.append(b.name)
     return removed
@@ -225,7 +206,18 @@ def auto_backup_due(now: datetime, app: Flask | None = None) -> bool:
     hour, minute = (int(x) for x in s.time.split(":"))
     if (now.hour, now.minute) < (hour, minute):
         return False
-    return not any(b.kind == "auto" and b.created.date() == now.date() for b in list_backups(app))
+    autos = [b for b in list_backups(app) if b.kind == "auto"]
+    if not autos:
+        return True
+    last = autos[0].created
+    if s.frequency == "daily":
+        return last.date() < now.date()
+    if s.frequency == "weekly":
+        return now - last >= timedelta(days=7) - timedelta(hours=1)
+    return (last.year, last.month) < (
+        now.year,
+        now.month,
+    )  # maandelijks: eerste run in een nieuwe maand
 
 
 def run_auto_backup(app: Flask, now: datetime | None = None) -> Path | None:

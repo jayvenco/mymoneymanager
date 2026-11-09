@@ -21,14 +21,15 @@
   </div>
 
   <h3 class="mt-6 font-semibold">Automatische back-ups</h3>
-  <form method="post" action="{{ url_for('backup.save_settings') }}" class="mt-2 grid max-w-2xl gap-3 sm:grid-cols-4" novalidate>
+  <form method="post" action="{{ url_for('backup.save_settings') }}" class="mt-2 grid max-w-2xl gap-3 sm:grid-cols-3" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label class="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" name="enabled" value="1" class="h-4 w-4 rounded" {{ 'checked' if settings.enabled }}> Dagelijks automatisch een back-up maken in <code class="num">/backups</code></label>
+    <label class="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" name="enabled" value="1" class="h-4 w-4 rounded" {{ 'checked' if settings.enabled }}> Automatisch een back-up maken in <code class="num">/backups</code></label>
+    <div><label class="label" for="b-freq">Frequentie</label>
+      <select class="input" id="b-freq" name="frequency">{% for k, l in frequencies.items() %}<option value="{{ k }}" {{ 'selected' if settings.frequency == k }}>{{ l }}</option>{% endfor %}</select></div>
     <div><label class="label" for="b-time">Tijdstip</label><input class="input num" id="b-time" name="time" value="{{ settings.time }}" placeholder="03:00"></div>
-    <div><label class="label" for="b-d">Dagelijks bewaren</label><input class="input num" id="b-d" name="daily" type="number" min="0" value="{{ settings.daily }}"></div>
-    <div><label class="label" for="b-w">Wekelijks bewaren</label><input class="input num" id="b-w" name="weekly" type="number" min="0" value="{{ settings.weekly }}"></div>
-    <div><label class="label" for="b-m">Maandelijks bewaren</label><input class="input num" id="b-m" name="monthly" type="number" min="0" value="{{ settings.monthly }}"></div>
-    <div class="sm:col-span-4"><button class="btn-secondary">Opslaan</button></div>
+    <div><label class="label" for="b-days">Bewaren (dagen)</label><input class="input num" id="b-days" name="keep_days" type="number" min="1" max="3650" value="{{ settings.keep_days }}"></div>
+    <p class="text-xs text-slate-500 sm:col-span-3">Maandelijks = de eerste keer na het ingestelde tijdstip in een nieuwe maand. Oudere automatische back-ups worden na het aantal dagen verwijderd; de nieuwste blijft altijd staan. Handmatige back-ups en veiligheidskopieën blijven bewaard.</p>
+    <div class="sm:col-span-3"><button class="btn-secondary">Opslaan</button></div>
   </form>
 
   <h3 class="mt-6 font-semibold">Geschiedenis</h3>
