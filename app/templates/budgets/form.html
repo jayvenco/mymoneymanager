@@ -1,0 +1,41 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Budget bewerken' if budget else 'Nieuw budget') }}
+<form hx-post="{{ url_for('budgets.update', budget_id=budget.id, maand=ym) if budget else url_for('budgets.create', maand=ym) }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label" for="b-cat">Categorie</label>
+      <select class="input" id="b-cat" name="category_id">
+        <option value="">Kies…</option>
+        {% for parent, children in tree %}
+          <option value="{{ parent.id }}" {{ 'selected' if values.category_id|string == parent.id|string }}>{{ parent.name }}{% if children %} (totaal incl. sub){% endif %}</option>
+          {% for c in children %}<option value="{{ c.id }}" {{ 'selected' if values.category_id|string == c.id|string }}>&nbsp;&nbsp;{{ c.name }}</option>{% endfor %}
+        {% endfor %}
+      </select>{{ field_error(errors, 'category_id') }}
+    </div>
+    <div>
+      <label class="label" for="b-amount">Bedrag per maand (€)</label>
+      <input class="input num" id="b-amount" name="amount" inputmode="decimal" value="{{ values.amount }}">{{ field_error(errors, 'amount') }}
+    </div>
+    <div>
+      <label class="label" for="b-member">Voor</label>
+      <select class="input" id="b-member" name="member_id">
+        <option value="">Hele huishouden</option>
+        {% for m in members %}<option value="{{ m.id }}" {{ 'selected' if values.member_id|string == m.id|string }}>{{ m.name }}</option>{% endfor %}
+      </select>{{ field_error(errors, 'member_id') }}
+    </div>
+    <fieldset>
+      <legend class="label">Geldt voor</legend>
+      <label class="flex items-center gap-2 text-sm"><input type="radio" name="scope" value="default" class="h-4 w-4" {{ 'checked' if values.scope != 'month' }}> Elke maand (standaard)</label>
+      <label class="mt-1 flex items-center gap-2 text-sm"><input type="radio" name="scope" value="month" class="h-4 w-4" {{ 'checked' if values.scope == 'month' }}> Alleen <span class="capitalize">{{ label }}</span></label>
+    </fieldset>
+  </div>
+  <label class="flex items-start gap-2 text-sm">
+    <input type="checkbox" class="mt-0.5 h-4 w-4 rounded" name="rollover" value="1" {{ 'checked' if values.rollover }}>
+    <span><strong>Rollover</strong> — neem het niet-bestede (of overschreden) bedrag mee naar de volgende maand.</span>
+  </label>
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary">Opslaan</button>
+  </div>
+</form>
+{{ modal_close() }}

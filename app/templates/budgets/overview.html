@@ -1,0 +1,66 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Budgetten · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Budgetten</h1>
+    <p class="text-sm text-slate-500">{{ period.start|datum }} t/m {{ period.end|datum }}</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <div class="flex items-center rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <a class="btn-ghost !min-h-[40px] !px-2" href="{{ url_for('budgets.overview', maand=prev_ym) }}" aria-label="Vorige maand">{{ icon('chevron-left') }}</a>
+      <span class="min-w-[9rem] px-2 text-center text-sm font-semibold capitalize">{{ label }}</span>
+      <a class="btn-ghost !min-h-[40px] !px-2" href="{{ url_for('budgets.overview', maand=next_ym) }}" aria-label="Volgende maand">{{ icon('chevron-right') }}</a>
+    </div>
+    <form hx-post="{{ url_for('budgets.copy') }}" hx-swap="none"><input type="hidden" name="maand" value="{{ ym }}">
+      <button class="btn-secondary">{{ icon('copy') }} Budgetten kopiëren van vorige maand</button></form>
+    <button class="btn-primary" hx-get="{{ url_for('budgets.new_form', maand=ym) }}" hx-target="#modal-root">{{ icon('plus') }} Budget</button>
+  </div>
+</div>
+
+{% if lines %}
+<div class="card mb-4">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <p class="text-sm text-slate-500">Totaal besteed van beschikbaar</p>
+    <p class="num"><strong class="text-xl">{{ total_spent|eur }}</strong> <span class="text-slate-500">van {{ total_available|eur }}</span></p>
+  </div>
+</div>
+<ul class="grid gap-3 lg:grid-cols-2">
+  {% for l in lines %}
+  {% set bar = {'ok': 'bg-emerald-500', 'warn': 'bg-amber-500', 'over': 'bg-red-500'}[l.state] %}
+  <li class="card !p-4">
+    <div class="mb-2 flex items-center justify-between gap-2">
+      <p class="flex items-center gap-2 font-semibold">
+        <span class="inline-block h-3 w-3 rounded-full" style="background-color: {{ l.category.color }}"></span>{{ l.category.name }}
+        {% if l.budget.member_id %}<span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">persoonlijk</span>{% endif %}
+        {% if l.budget.month %}<span class="badge bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">alleen deze maand</span>{% endif %}
+        {% if l.budget.rollover %}<span class="badge bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">{{ icon('repeat', '!h-3 !w-3') }} rollover</span>{% endif %}
+      </p>
+      <span class="flex shrink-0">
+        <button class="btn-ghost !min-h-[34px] !px-2" hx-get="{{ url_for('budgets.edit_form', budget_id=l.budget.id, maand=ym) }}" hx-target="#modal-root" aria-label="Budget bewerken">{{ icon('pencil') }}</button>
+        <button class="btn-ghost !min-h-[34px] !px-2 text-red-600" hx-post="{{ url_for('budgets.delete', budget_id=l.budget.id) }}" hx-swap="none" hx-confirm="Dit budget verwijderen?" aria-label="Budget verwijderen">{{ icon('trash-2') }}</button>
+      </span>
+    </div>
+    <div class="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" aria-valuenow="{{ [l.pct, 100]|min }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ l.category.name }}: {{ l.pct }}% besteed">
+      <div class="h-full rounded-full {{ bar }}" style="width: {{ [l.pct, 100]|min }}%"></div>
+    </div>
+    <div class="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 text-sm">
+      <p class="num"><strong>{{ l.spent_cents|eur }}</strong> <span class="text-slate-500">van {{ l.available_cents|eur }}</span>
+        {% if l.carry_cents %}<span class="text-xs text-slate-500">({{ l.base_cents|eur }} {{ '+' if l.carry_cents > 0 else '−' }} {{ (l.carry_cents|abs)|eur }} rollover)</span>{% endif %}</p>
+      <p class="num {{ 'text-red-600 dark:text-red-400' if l.remaining_cents < 0 else 'text-slate-600 dark:text-slate-300' }}">
+        {% if l.remaining_cents >= 0 %}{{ l.remaining_cents|eur }} over{% else %}{{ (-l.remaining_cents)|eur }} overschreden{% endif %}
+        {% if l.per_day_cents %}· <span class="text-slate-500">{{ l.per_day_cents|eur }} per dag</span>{% endif %}
+      </p>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="card py-12 text-center">
+  <p class="text-lg font-semibold">Nog geen budgetten voor {{ label }}</p>
+  <p class="mx-auto mt-1 max-w-md text-slate-500">Stel een maandbudget per categorie in; het geldt standaard elke maand. Je kunt per maand afwijken.</p>
+  <button class="btn-primary mt-4" hx-get="{{ url_for('budgets.new_form', maand=ym) }}" hx-target="#modal-root">{{ icon('plus') }} Eerste budget instellen</button>
+</div>
+{% endif %}
+{% endblock %}

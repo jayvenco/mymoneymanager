@@ -9,6 +9,8 @@ import calendar
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from sqlalchemy import Integer, case, cast, func
+
 
 @dataclass(frozen=True)
 class Period:
@@ -67,3 +69,12 @@ def months_between(first_ym: str, last_ym: str) -> list[str]:
 def add_months_clamped(d: date, months: int) -> date:
     year, month = _add_months(d.year, d.month, months)
     return date(year, month, min(d.day, calendar.monthrange(year, month)[1]))
+
+
+def fin_month_expr(column, start_day: int):
+    """SQL-expressie die per datum de financiële maand (YYYY-MM) bepaalt (SQLite)."""
+    base = func.strftime("%Y-%m", column)
+    if start_day <= 1:
+        return base
+    next_month = func.strftime("%Y-%m", func.date(column, "start of month", "+1 month"))
+    return case((cast(func.strftime("%d", column), Integer) >= start_day, next_month), else_=base)
