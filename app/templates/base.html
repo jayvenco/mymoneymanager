@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <script defer src="{{ url_for('static', filename='vendor/htmx.min.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='js/charts.js') }}"></script>
   <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
   <script defer src="{{ url_for('static', filename='vendor/alpine.min.js') }}"></script>
   {% block head %}{% endblock %}
@@ -33,7 +35,7 @@
         <span x-text="t.message"></span>
         <template x-if="t.undoUrl">
           <button type="button" class="rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold hover:bg-white/30"
-                  :hx-post="t.undoUrl" x-init="htmx.process($el)" @click="dismiss(t.id)">Ongedaan maken</button>
+                  @click="undo(t)">Ongedaan maken</button>
         </template>
       </div>
     </template>

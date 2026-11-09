@@ -1,0 +1,52 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Categorieën · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold tracking-tight">Categorieën</h1>
+  <a class="btn-secondary" href="{{ url_for('categories.tags_view') }}">{{ icon('tags') }} Tags beheren</a>
+</div>
+<div class="grid gap-6 lg:grid-cols-2">
+  {% for kind, title in [('expense', 'Uitgaven'), ('income', 'Inkomsten')] %}
+  <section class="card" aria-labelledby="k-{{ kind }}">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 id="k-{{ kind }}" class="text-lg font-semibold">{{ title }}</h2>
+      <button class="btn-secondary !min-h-[36px]" hx-get="{{ url_for('categories.new_form', kind=kind) }}" hx-target="#modal-root">{{ icon('plus') }} Categorie</button>
+    </div>
+    <ul class="space-y-2" x-data x-sortable data-sortable="{{ url_for('categories.reorder') }}">
+      {% for parent, children in trees[kind] %}
+      <li draggable="true" data-id="{{ parent.id }}" class="rounded-xl border border-slate-200 p-2 dark:border-slate-700 {{ 'opacity-60' if parent.is_archived }}">
+        <div class="flex items-center gap-2">
+          <span class="cursor-grab text-slate-400" aria-hidden="true">{{ icon('grip-vertical') }}</span>
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg text-white" style="background-color: {{ parent.color }}">{{ icon(parent.icon, '!h-4 !w-4') }}</span>
+          <span class="flex-1 font-semibold">{{ parent.name }}{% if parent.is_one_off %} <span class="badge bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300">los</span>{% endif %}{% if parent.is_system %} <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">systeem</span>{% endif %}</span>
+          <span class="num text-xs text-slate-500">{{ usage.get(parent.id, 0) }}</span>
+          {% if not parent.is_system %}
+          <button class="btn-ghost !min-h-[34px] !px-2" hx-get="{{ url_for('categories.new_form', parent=parent.id) }}" hx-target="#modal-root" aria-label="Subcategorie toevoegen">{{ icon('plus') }}</button>
+          <button class="btn-ghost !min-h-[34px] !px-2" hx-get="{{ url_for('categories.edit_form', category_id=parent.id) }}" hx-target="#modal-root" aria-label="Bewerken">{{ icon('pencil') }}</button>
+          <button class="btn-ghost !min-h-[34px] !px-2" hx-post="{{ url_for('categories.archive', category_id=parent.id) }}" hx-swap="none" aria-label="Archiveren">{{ icon('archive') }}</button>
+          <button class="btn-ghost !min-h-[34px] !px-2 text-red-600" hx-get="{{ url_for('categories.delete_form', category_id=parent.id) }}" hx-target="#modal-root" aria-label="Verwijderen">{{ icon('trash-2') }}</button>
+          {% endif %}
+        </div>
+        {% if children %}
+        <ul class="mt-2 ml-8 space-y-1" x-data x-sortable data-sortable="{{ url_for('categories.reorder') }}">
+          {% for c in children %}
+          <li draggable="true" data-id="{{ c.id }}" class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 {{ 'opacity-60' if c.is_archived }}">
+            <span class="cursor-grab text-slate-400" aria-hidden="true">{{ icon('grip-vertical', '!h-4 !w-4') }}</span>
+            <span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: {{ c.color }}"></span>
+            <span class="flex-1 text-sm">{{ c.name }}</span>
+            <span class="num text-xs text-slate-500">{{ usage.get(c.id, 0) }}</span>
+            <button class="btn-ghost !min-h-[32px] !px-2" hx-get="{{ url_for('categories.edit_form', category_id=c.id) }}" hx-target="#modal-root" aria-label="Bewerken">{{ icon('pencil', '!h-4 !w-4') }}</button>
+            <button class="btn-ghost !min-h-[32px] !px-2" hx-post="{{ url_for('categories.archive', category_id=c.id) }}" hx-swap="none" aria-label="Archiveren">{{ icon('archive', '!h-4 !w-4') }}</button>
+            <button class="btn-ghost !min-h-[32px] !px-2 text-red-600" hx-get="{{ url_for('categories.delete_form', category_id=c.id) }}" hx-target="#modal-root" aria-label="Verwijderen">{{ icon('trash-2', '!h-4 !w-4') }}</button>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

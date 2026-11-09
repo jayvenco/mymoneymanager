@@ -1,0 +1,22 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Tag bewerken') }}
+<form hx-post="{{ url_for('categories.tag_update', tag_id=tag.id) }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><label class="label" for="t-name">Naam</label><input class="input" id="t-name" name="name" value="{{ tag.name }}" required autofocus>{{ field_error(errors, 'name') }}</div>
+    <div><label class="label" for="t-color">Kleur</label><input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="t-color" name="color" type="color" value="{{ tag.color }}"></div>
+  </div>
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary">Opslaan</button>
+  </div>
+</form>
+{% if others %}
+<hr class="my-5 border-slate-200 dark:border-slate-700">
+<form hx-post="{{ url_for('categories.tag_merge', tag_id=tag.id) }}" hx-target="#modal-root" class="flex flex-wrap items-end gap-3">
+  <div class="flex-1"><label class="label" for="t-merge">Samenvoegen met</label>
+    <select class="input" id="t-merge" name="target">{% for o in others %}<option value="{{ o.id }}">{{ o.name }}</option>{% endfor %}</select></div>
+  <button class="btn-secondary">Samenvoegen</button>
+</form>
+<p class="mt-1 text-xs text-slate-500">“{{ tag.name }}” verdwijnt; alle transacties krijgen de gekozen tag.</p>
+{% endif %}
+{{ modal_close() }}

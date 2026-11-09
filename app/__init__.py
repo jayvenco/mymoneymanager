@@ -114,16 +114,31 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 
 
 def _register_blueprints(app: Flask) -> None:
+    from .blueprints.accounts import bp as accounts_bp
     from .blueprints.auth import bp as auth_bp
+    from .blueprints.categories import bp as categories_bp
     from .blueprints.reports import bp as reports_bp
+    from .blueprints.settings import bp as settings_bp
     from .blueprints.setup import bp as setup_bp
+    from .blueprints.transactions import bp as transactions_bp
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(setup_bp)
-    app.register_blueprint(reports_bp)
+    for blueprint in (
+        auth_bp,
+        setup_bp,
+        reports_bp,
+        transactions_bp,
+        accounts_bp,
+        categories_bp,
+        settings_bp,
+    ):
+        app.register_blueprint(blueprint)
 
 
 def _register_hooks(app: Flask) -> None:
+    from flask_login import current_user
+
+    from .services.household import get_household
+    from .services.people import current_person, person_options
     from .services.setup import setup_needed
 
     @app.route("/health")
@@ -174,7 +189,12 @@ def _register_hooks(app: Flask) -> None:
             for ep, label, icon in NAV_ITEMS
             if ep in app.view_functions
         ]
+        extra: dict[str, Any] = {}
+        if current_user.is_authenticated and get_household() is not None:
+            extra["person"] = current_person()
+            extra["person_options"] = person_options()
         return {
+            **extra,
             "app_name": APP_NAME,
             "app_version": app.config["APP_VERSION"],
             "nav_items": nav,

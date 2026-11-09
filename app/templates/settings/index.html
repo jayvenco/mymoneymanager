@@ -1,0 +1,11 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Instellingen · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Instellingen</h1>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('categories.list_view') }}">{{ icon('tags') }}<span><strong class="block">Categorieën</strong><span class="text-sm text-slate-500">Beheren, kleuren, volgorde</span></span></a>
+  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('categories.tags_view') }}">{{ icon('tag') }}<span><strong class="block">Tags</strong><span class="text-sm text-slate-500">Hernoemen, samenvoegen</span></span></a>
+  <a class="card flex items-center gap-3 hover:border-brand-300" href="{{ url_for('accounts.list_view') }}">{{ icon('wallet') }}<span><strong class="block">Rekeningen</strong><span class="text-sm text-slate-500">Eigenaar, zichtbaarheid, saldo</span></span></a>
+</div>
+{% endblock %}

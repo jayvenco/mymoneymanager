@@ -19,9 +19,17 @@ const icons = [
   "menu", "more-horizontal", "undo-2", "arrow-up", "arrow-down", "arrow-up-down",
   "grip-vertical", "archive", "file-text", "file-spreadsheet", "printer", "link", "landmark",
 ];
+// Nieuwe bestandsnamen in recente Lucide-versies; de oude id's blijven in de templates bruikbaar.
+const aliases = {
+  "bar-chart-3": "chart-column",
+  home: "house",
+  "plus-circle": "circle-plus",
+  "alert-triangle": "triangle-alert",
+  "more-horizontal": "ellipsis",
+};
 let sprite = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">';
 for (const name of icons) {
-  const file = `node_modules/lucide-static/icons/${name}.svg`;
+  const file = `node_modules/lucide-static/icons/${aliases[name] ?? name}.svg`;
   if (!existsSync(file)) {
     console.warn(`icoon ontbreekt: ${name}`);
     continue;

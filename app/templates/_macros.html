@@ -15,3 +15,23 @@
 <span class="badge bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">Gezamenlijk</span>
 {% endif %}
 {%- endmacro %}
+
+{% macro modal_open(title, size='max-w-xl') -%}
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="{{ title }}"
+     x-data @keydown.escape.window="mmmCloseModal()" @click.self="mmmCloseModal()">
+  <div class="max-h-[92vh] w-full {{ size }} overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl dark:bg-slate-900 sm:rounded-2xl">
+    <div class="mb-4 flex items-start justify-between gap-4">
+      <h2 class="text-lg font-semibold">{{ title }}</h2>
+      <button type="button" class="btn-ghost !min-h-[36px] !px-2" onclick="mmmCloseModal()" aria-label="Sluiten">{{ icon('x') }}</button>
+    </div>
+{%- endmacro %}
+{% macro modal_close() -%}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro amount(cents, type, label=None) -%}
+{% if type == 'income' %}<span class="num font-semibold text-emerald-600 dark:text-emerald-400">+{{ cents|eur }}</span>
+{% elif type == 'transfer' %}<span class="num font-semibold text-slate-500 dark:text-slate-400">{{ cents|eur }}</span>
+{% else %}<span class="num font-semibold">-{{ cents|eur }}</span>{% endif %}
+{%- endmacro %}

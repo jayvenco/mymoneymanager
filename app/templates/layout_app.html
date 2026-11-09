@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icon %}
 {% block body %}
-<div class="flex min-h-screen" x-data="{ collapsed: localStorage.getItem('mmm-nav') === '1' }"
-     x-effect="try { localStorage.setItem('mmm-nav', collapsed ? '1' : '0') } catch (e) {}">
+<div class="flex min-h-screen" x-data="appShell()">
   {# Zijbalk (desktop) #}
   <aside class="sticky top-0 hidden h-screen shrink-0 flex-col border-r border-slate-200 bg-white p-3 transition-all dark:border-slate-800 dark:bg-slate-900 md:flex"
          :class="collapsed ? 'w-[68px]' : 'w-60'" aria-label="Hoofdnavigatie">
@@ -19,7 +18,7 @@
         </a>
       {% endfor %}
     </nav>
-    <button type="button" class="nav-link" @click="collapsed = !collapsed" :aria-label="collapsed ? 'Menu uitklappen' : 'Menu inklappen'">
+    <button type="button" class="nav-link" @click="toggle()" :aria-label="collapsed ? 'Menu uitklappen' : 'Menu inklappen'">
       {{ icon('chevron-left') }}<span x-show="!collapsed">Inklappen</span>
     </button>
   </aside>
@@ -29,6 +28,18 @@
     <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
       <div class="flex min-w-0 items-center gap-3">
         <span class="font-semibold md:hidden">{{ app_name }}</span>
+        {% if person_options is defined %}
+        <form method="post" action="{{ url_for('settings.person') }}" class="flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-slate-100 p-1 dark:bg-slate-800" role="group" aria-label="Persoonsfilter">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+          {% for opt in person_options %}
+            <button name="person" value="{{ opt.key }}" aria-pressed="{{ 'true' if person.key == opt.key else 'false' }}"
+                    class="flex min-h-[36px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-medium transition aria-pressed:bg-white aria-pressed:shadow aria-pressed:text-slate-900 text-slate-600 dark:text-slate-300 dark:aria-pressed:bg-slate-700 dark:aria-pressed:text-white">
+              {% if opt.color %}<span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: {{ opt.color }}"></span>{% endif %}{{ opt.label }}
+            </button>
+          {% endfor %}
+        </form>
+        {% endif %}
         {% block header_left %}{% endblock %}
       </div>
       <div class="flex items-center gap-2">
@@ -54,6 +65,14 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  {# Modal-container en zwevende '+'-knop #}
+  <div id="modal-root"></div>
+    <button type="button" data-new-transaction hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root" hx-swap="innerHTML"
+          class="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg transition hover:bg-brand-800 md:bottom-8 md:right-8"
+          aria-label="Nieuwe transactie (N)" title="Nieuwe transactie (N)">
+    {{ icon('plus', '!h-7 !w-7') }}
+  </button>
 
   {# Navigatie onderin (mobiel) #}
   <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-900 md:hidden"

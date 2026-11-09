@@ -1,0 +1,21 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Categorie bewerken' if category else 'Nieuwe categorie') }}
+<form hx-post="{{ url_for('categories.update_view', category_id=category.id) if category else url_for('categories.create') }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <input type="hidden" name="kind" value="{{ values.kind }}">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><label class="label" for="c-name">Naam</label><input class="input" id="c-name" name="name" value="{{ values.name }}" required autofocus>{{ field_error(errors, 'name') }}</div>
+    <div><label class="label" for="c-color">Kleur</label><input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="c-color" name="color" type="color" value="{{ values.color }}">{{ field_error(errors, 'color') }}</div>
+    <div><label class="label" for="c-parent">Hoofdcategorie</label>
+      <select class="input" id="c-parent" name="parent_id">
+        <option value="">— (zelf een hoofdcategorie)</option>
+        {% for p in parents %}<option value="{{ p.id }}" {{ 'selected' if values.parent_id|string == p.id|string }}>{{ p.name }}</option>{% endfor %}
+      </select>{{ field_error(errors, 'parent_id') }}</div>
+    <div><label class="label" for="c-icon">Pictogram</label>
+      <select class="input" id="c-icon" name="icon">{% for i in icons %}<option value="{{ i }}" {{ 'selected' if values.icon == i }}>{{ i }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary">Opslaan</button>
+  </div>
+</form>
+{{ modal_close() }}

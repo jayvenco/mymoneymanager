@@ -1,0 +1,20 @@
+{% from "_macros.html" import icon, modal_open, modal_close %}
+{{ modal_open('Categorie verwijderen') }}
+<form hx-post="{{ url_for('categories.delete', category_id=category.id) }}" hx-target="#modal-root" class="space-y-4">
+  <p>Je staat op het punt <strong>{{ category.name }}</strong>{% if category.children %} en {{ category.children|length }} subcategorie(ën){% endif %} te verwijderen. Dit kan niet ongedaan worden gemaakt.</p>
+  {% if count %}
+    <div class="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      Er zijn <strong class="num">{{ count }}</strong> transacties gekoppeld. Kies een categorie waarnaartoe ze verplaatst worden.
+    </div>
+    <div><label class="label" for="d-target">Verplaats transacties naar</label>
+      <select class="input" id="d-target" name="target" required>
+        <option value="">Kies…</option>
+        {% for t in targets %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+      </select></div>
+  {% endif %}
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-danger">Definitief verwijderen</button>
+  </div>
+</form>
+{{ modal_close() }}

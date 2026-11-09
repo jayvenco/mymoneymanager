@@ -17,3 +17,4 @@ app/static/css/app.css
 app/static/vendor/
 .DS_Store
 .devdata/
+.claude/

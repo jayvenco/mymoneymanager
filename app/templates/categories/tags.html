@@ -1,0 +1,22 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Tags · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('categories.list_view') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Categorieën</a>
+<h1 class="mb-5 text-2xl font-bold tracking-tight">Tags</h1>
+<div class="card !p-0">
+  <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for tag, n in tags %}
+    <li class="flex items-center gap-3 px-4 py-3">
+      <span class="badge" style="background-color: {{ tag.color }}22; color: {{ tag.color }}">#{{ tag.name }}</span>
+      <a class="flex-1 text-sm text-slate-500 hover:underline" href="{{ url_for('transactions.list_view', tag=tag.id) }}"><span class="num">{{ n }}</span> transacties</a>
+      <button class="btn-ghost !min-h-[36px] !px-2" hx-get="{{ url_for('categories.tag_form', tag_id=tag.id) }}" hx-target="#modal-root" aria-label="Tag bewerken of samenvoegen">{{ icon('pencil') }}</button>
+      <button class="btn-ghost !min-h-[36px] !px-2 text-red-600" hx-post="{{ url_for('categories.tag_delete', tag_id=tag.id) }}" hx-swap="none"
+              hx-confirm="Tag '{{ tag.name }}' verwijderen? De transacties blijven bestaan." aria-label="Tag verwijderen">{{ icon('trash-2') }}</button>
+    </li>
+    {% else %}
+    <li class="px-4 py-10 text-center text-slate-500">Nog geen tags. Voeg tags toe bij het invoeren van een transactie.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
