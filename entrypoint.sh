@@ -35,6 +35,6 @@ export SCHEDULER_ENABLED=true
 echo "MyMoneyManager: Gunicorn starten op poort 8080 (uid=$PUID gid=$PGID)"
 exec $RUN gunicorn wsgi:app \
   --bind 0.0.0.0:8080 \
-  --workers 2 --threads 4 --worker-class gthread \
+  --preload --workers 2 --threads 2 --worker-class gthread \
   --access-logfile - --error-logfile - \
   --timeout 60

@@ -4,10 +4,6 @@ import csv
 import io
 from datetime import datetime
 
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
-
 from ..config import APP_NAME
 from .report_model import Cell, Report, Section
 
@@ -69,6 +65,11 @@ def _sheet_name(title: str, used: set[str]) -> str:
 
 
 def to_xlsx(report: Report, meta: dict[str, str]) -> bytes:
+    # Lazy import: openpyxl kost ~8 MB geheugen per worker en is zelden nodig.
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
     wb = Workbook()
     wb.remove(wb.active)
     used: set[str] = set()

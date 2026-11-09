@@ -32,6 +32,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     TZ=Europe/Amsterdam \
     PUID=99 PGID=100 UMASK=022 \
+    MALLOC_ARENA_MAX=2 \
     DATA_DIR=/data BACKUP_DIR=/backups \
     APP_VERSION=${APP_VERSION} GIT_SHA=${GIT_SHA} BUILD_DATE=${BUILD_DATE}
 
@@ -45,6 +46,7 @@ RUN pip install -r requirements.txt \
     && find /usr/local/lib/python3.12/site-packages/babel/locale-data -name '*.dat' \
          ! -name 'root.dat' ! -name 'en*.dat' ! -name 'nl*.dat' -delete \
     && find /usr/local -depth \( -name '__pycache__' -o -name 'tests' -path '*/site-packages/*' \) -exec rm -rf {} + \
+    && pip uninstall -y pip setuptools wheel >/dev/null 2>&1 || true \
     && rm -rf /root/.cache
 
 COPY . .

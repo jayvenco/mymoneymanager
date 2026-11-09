@@ -183,7 +183,7 @@ def export_report(slug: str, fmt: str):
     report = make_report(slug, params)
     meta = meta_for(params)
     if fmt == "csv":
-        data, mimetype = export.to_csv(report, meta), "text/csv; charset=utf-8"
+        data, mimetype = export.to_csv(report, meta), "text/csv"
     elif fmt == "xlsx":
         data, mimetype = (
             export.to_xlsx(report, meta),
