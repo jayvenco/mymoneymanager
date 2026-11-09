@@ -1,0 +1,20 @@
+{
+  "name": "mymoneymanager-assets",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:css": "tailwindcss -i app/static/src/input.css -o app/static/css/app.css --minify",
+    "build:vendor": "node scripts/vendor.mjs",
+    "build": "npm run build:vendor && npm run build:css",
+    "watch": "tailwindcss -i app/static/src/input.css -o app/static/css/app.css --watch"
+  },
+  "dependencies": {
+    "alpinejs": "3.14.3",
+    "chart.js": "4.4.6",
+    "htmx.org": "2.0.3",
+    "lucide-static": "0.460.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.14"
+  }
+}

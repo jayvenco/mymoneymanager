@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+.env
+data/
+backups/
+*.db
+*.db-wal
+*.db-shm
+# Gegenereerde front-end bestanden (worden in de Docker-build gemaakt)
+app/static/css/app.css
+app/static/vendor/
+.DS_Store
+.devdata/
