@@ -1,0 +1,102 @@
+{% from "_macros.html" import icon %}
+
+{% macro cell(c) -%}
+{%- if c.kind == 'money' or c.kind == 'delta' -%}
+  {%- if c.v == '' -%}—{%- else -%}
+    <span class="num {{ 'font-semibold' if c.bold }}" {% if c.color %}style="color: {{ c.color }}"{% endif %}>{{ c.v|eur(sign=(c.kind == 'delta')) }}</span>
+    {%- if c.note %}<span class="block text-[11px] font-normal opacity-70">{{ c.note }}</span>{% endif -%}
+  {%- endif -%}
+{%- elif c.kind == 'pct' -%}
+  {%- if c.v == '' -%}—{%- else -%}<span class="num">{{ ('%.1f'|format(c.v))|replace('.', ',') }}%</span>{%- endif -%}
+{%- elif c.kind == 'int' -%}<span class="num">{{ c.v }}</span>
+{%- else -%}
+  {%- if c.href %}<a class="hover:underline" href="{{ c.href }}"{% if c.color %} style="color: {{ c.color }}"{% endif %}>{{ c.v }}</a>
+  {%- else %}<span class="{{ 'font-semibold' if c.bold }}" {% if c.color %}style="color: {{ c.color }}"{% endif %}>{{ c.v }}</span>{% endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro section(sec, hide_title=False) %}
+<section class="card !p-0 overflow-hidden" aria-labelledby="sec-{{ sec.key }}">
+  {% if not hide_title %}<h2 id="sec-{{ sec.key }}" class="px-5 pt-5 text-lg font-semibold">{{ sec.title }}</h2>{% endif %}
+  {% if sec.chart %}
+    <div class="px-5 pt-4 {{ 'h-72' if sec.chart.type != 'doughnut' else 'h-80' }}">
+      <canvas data-chart='{{ sec.chart|tojson|forceescape }}' role="img" aria-label="Grafiek: {{ sec.title }}"></canvas>
+    </div>
+  {% endif %}
+  {% if sec.columns %}
+  <div class="mt-3 overflow-x-auto">
+    <table class="w-full min-w-max text-left text-sm">
+      <thead class="border-y border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+        <tr>{% for col in sec.columns %}<th scope="col" class="px-4 py-2.5 {{ 'text-right' if loop.index0 >= sec.numeric_from else '' }} {{ 'sticky left-0 bg-slate-50 dark:bg-slate-900' if loop.first }}">{{ col }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in sec.rows %}
+        <tr class="border-b border-slate-100 dark:border-slate-800">
+          {% for c in row %}
+            <td class="px-4 py-2 {{ 'text-right' if loop.index0 >= sec.numeric_from else 'sticky left-0 bg-white dark:bg-slate-900' }}
+                {{ 'pl-' ~ (4 + c.indent * 6) if c.indent and loop.first }}
+                {% if c.heat == 'ok' %}bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200{% elif c.heat == 'warn' %}bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200{% elif c.heat == 'over' %}bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-200{% endif %}"
+                {% if c.indent and loop.first %}style="padding-left: {{ 1 + c.indent * 1.5 }}rem"{% endif %}>{{ cell(c) }}</td>
+          {% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ sec.columns|length }}" class="px-4 py-8 text-center text-slate-500">Geen gegevens in deze periode.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if sec.total and sec.rows %}
+      <tfoot class="border-t-2 border-slate-300 bg-slate-50 font-semibold dark:border-slate-700 dark:bg-slate-900/60">
+        <tr>{% for c in sec.total %}<td class="px-4 py-2.5 {{ 'text-right' if loop.index0 >= sec.numeric_from else 'sticky left-0 bg-slate-50 dark:bg-slate-900' }}">{{ cell(c) }}</td>{% endfor %}</tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+  {% if sec.note %}<p class="px-5 py-3 text-xs text-slate-500">{{ sec.note }}</p>{% else %}<div class="h-3"></div>{% endif %}
+</section>
+{% endmacro %}
+
+{# Rapportbalk: periode, vergelijking en export #}
+{% macro report_bar(slug, params, query, period_choices, compare_choices, tabs, extra_query) %}
+<div class="mb-5 space-y-3">
+  <form method="get" class="card !p-3 flex flex-wrap items-end gap-3" x-data="{ period: '{{ params.period_key }}' }">
+    <div>
+      <label class="label" for="rb-period">Periode</label>
+      <select class="input !py-2" id="rb-period" name="periode" x-model="period" @change="if (period !== 'custom') $el.form.requestSubmit()">
+        {% for key, label in period_choices %}<option value="{{ key }}" {{ 'selected' if params.period_key == key }}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div x-show="period === 'custom'" x-cloak class="flex gap-2">
+      <div><label class="label" for="rb-from">Van</label><input class="input !py-2" id="rb-from" type="date" name="van" value="{{ params.period.start.isoformat() }}"></div>
+      <div><label class="label" for="rb-to">Tot en met</label><input class="input !py-2" id="rb-to" type="date" name="tot" value="{{ params.period.end.isoformat() }}"></div>
+      <div class="self-end"><button class="btn-secondary">Toepassen</button></div>
+    </div>
+    <div>
+      <label class="label" for="rb-compare">Vergelijken met</label>
+      <select class="input !py-2" id="rb-compare" name="vergelijk" onchange="this.form.requestSubmit()">
+        {% for key, label in compare_choices %}<option value="{{ key }}" {{ 'selected' if params.compare == key }}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <label class="flex min-h-[44px] items-center gap-2 pb-0.5 text-sm">
+      <input type="hidden" name="losse" value="">
+      <input type="checkbox" class="h-4 w-4 rounded" name="losse" value="uit" {{ 'checked' if params.hide_one_off }} onchange="this.form.requestSubmit()"> Zonder losse grote uitgaven
+    </label>
+    {% for k, v in extra_query.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <p class="ml-auto self-center text-sm text-slate-500"><span class="num">{{ params.period.start|datum }}</span> t/m <span class="num">{{ params.period.end|datum }}</span>
+      {% if params.compare_period %}<br class="sm:hidden"><span class="hidden sm:inline">· vs </span><span class="num">{{ params.compare_period.start|datum }} t/m {{ params.compare_period.end|datum }}</span>{% endif %}</p>
+  </form>
+  <nav class="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1" aria-label="Rapporten">
+    {% for key, label in tabs %}
+      {% set href = url_for('reports.overview', **query) if key == 'overview' else url_for('reports.show', slug=key, **query) %}
+      <a href="{{ href }}" class="shrink-0 rounded-full px-4 py-2 text-sm font-medium {{ 'bg-brand-700 text-white' if slug == key else 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800' }}" {% if slug == key %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+</div>
+{% endmacro %}
+
+{% macro export_buttons(slug, query, extra_query) %}
+<div class="flex flex-wrap gap-2" role="group" aria-label="Exporteren">
+  {% for fmt, label, ic in [('csv', 'CSV', 'file-text'), ('xlsx', 'Excel', 'file-spreadsheet'), ('pdf', 'PDF', 'printer')] %}
+    <a class="btn-secondary !min-h-[38px]" href="{{ url_for('reports.export_report', slug=slug if slug != 'overview' else 'overzicht', fmt=fmt, **dict(query, **extra_query)) }}">{{ icon(ic, '!h-4 !w-4') }} {{ label }}</a>
+  {% endfor %}
+</div>
+{% endmacro %}

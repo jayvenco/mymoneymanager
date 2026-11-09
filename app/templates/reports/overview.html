@@ -1,14 +1,114 @@
 {% extends "layout_app.html" %}
+{% from "reports/_sections.html" import section, report_bar, export_buttons %}
+{% from "_macros.html" import icon, amount, member_badge %}
 {% block title %}Rapportages · {{ app_name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold tracking-tight">Welkom bij {{ household.name }}</h1>
-<p class="mt-1 text-slate-600 dark:text-slate-300">De rapportages verschijnen hier zodra er transacties zijn.</p>
-<div class="mt-6 grid gap-4 sm:grid-cols-2">
-  {% for m in members %}
-    <div class="card flex items-center gap-3">
-      <span class="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style="background-color: {{ m.color }}">{{ m.avatar_initials }}</span>
-      <div><p class="font-semibold">{{ m.name }}</p><p class="text-sm text-slate-500">Huishoudlid</p></div>
-    </div>
+{% set secs = {} %}{% for s in report.sections %}{% set _ = secs.update({s.key: s}) %}{% endfor %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold tracking-tight">Rapportages</h1>
+  <div class="flex flex-wrap items-center gap-2">
+    {{ export_buttons('overview', query, extra_query) }}
+    <button class="btn-primary" hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Transactie</button>
+  </div>
+</div>
+{{ report_bar('overview', params, query, period_choices, compare_choices, tabs, extra_query) }}
+
+{# KPI-kaarten #}
+<div class="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+  {% for k in report.extras.kpis %}
+  <div class="card !p-4">
+    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ k.label }}</p>
+    <p class="num mt-1 text-xl font-bold {{ 'text-emerald-600 dark:text-emerald-400' if k.label == 'Inkomsten' }}">
+      {% if k.value is none %}—{% elif k.kind == 'pct' %}{{ ('%.1f'|format(k.value))|replace('.', ',') }}%{% else %}{{ k.value|eur }}{% endif %}</p>
+    {% if k.delta %}
+      {% set diff = k.delta[0] %}
+      {% set good = (diff > 0) == (k.good == 'up') %}
+      <p class="num mt-1 text-xs font-medium {{ 'text-slate-500' if diff == 0 else ('text-emerald-600 dark:text-emerald-400' if good else 'text-red-600 dark:text-red-400') }}">
+        {{ icon('arrow-up' if diff > 0 else 'arrow-down', '!h-3 !w-3') if diff != 0 }}
+        {% if k.kind == 'pct' %}{{ ('%+.1f'|format(diff))|replace('.', ',') }} pt{% else %}{{ diff|eur(sign=True) }}{% if k.delta[1] is not none %} ({{ ('%+.0f'|format(k.delta[1])) }}%){% endif %}{% endif %}
+        <span class="font-normal text-slate-500">vs {{ 'vorige periode' if params.compare == 'prev' else 'vorig jaar' }}</span></p>
+    {% endif %}
+  </div>
   {% endfor %}
 </div>
+
+{# Wij samen #}
+{% if report.extras.wij_samen %}
+<section class="card mb-5" aria-labelledby="wij">
+  <h2 id="wij" class="mb-3 text-lg font-semibold">Wij samen</h2>
+  <div class="mb-4 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="img" aria-label="Aandeel in de uitgaven van het huishouden">
+    {% for p in report.extras.wij_samen %}<div style="width: {{ p.share }}%; background-color: {{ p.color }}" title="{{ p.name }}: {{ ('%.0f'|format(p.share)) }}%"></div>{% endfor %}
+  </div>
+  <div class="grid gap-3 sm:grid-cols-3">
+    {% for p in report.extras.wij_samen %}
+    <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+      <p class="flex items-center gap-2 font-semibold"><span class="inline-block h-3 w-3 rounded-full" style="background-color: {{ p.color }}"></span>{{ p.name }} <span class="num ml-auto text-xs font-normal text-slate-500">{{ ('%.0f'|format(p.share)) }}% van de uitgaven</span></p>
+      <dl class="mt-2 grid grid-cols-3 gap-2 text-sm">
+        <div><dt class="text-xs text-slate-500">Inkomsten</dt><dd class="num font-medium">{{ p.income|eur }}</dd></div>
+        <div><dt class="text-xs text-slate-500">Uitgaven</dt><dd class="num font-medium">{{ p.expense|eur }}</dd></div>
+        <div><dt class="text-xs text-slate-500">Spaarquote</dt><dd class="num font-medium">{% if p.savings_rate is none %}—{% else %}{{ ('%.0f'|format(p.savings_rate)) }}%{% endif %}</dd></div>
+      </dl>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# Grafieken #}
+<div class="mb-5 grid gap-5 xl:grid-cols-2">
+  {{ section(secs.maanden) }}
+  {{ section(secs.categorieen) }}
+</div>
+<div class="mb-5">{{ section(secs.vermogen) }}</div>
+
+{# Actiewidgets #}
+<div class="grid gap-5 lg:grid-cols-2">
+  <section class="card" aria-labelledby="w-budget">
+    <div class="mb-3 flex items-center justify-between"><h2 id="w-budget" class="font-semibold">Budgetstatus</h2><a class="text-sm text-brand-700 hover:underline dark:text-brand-300" href="{{ url_for('budgets.overview') }}">Alle budgetten</a></div>
+    {% if report.extras.budget_warnings %}<p class="mb-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{{ icon('alert-triangle', '!h-4 !w-4') }} {{ report.extras.budget_warnings }} budget(ten) zitten op of boven 80%.</p>{% endif %}
+    <ul class="space-y-3">
+      {% for l in report.extras.budget_lines %}
+      {% set bar = {'ok': 'bg-emerald-500', 'warn': 'bg-amber-500', 'over': 'bg-red-500'}[l.state] %}
+      <li><div class="flex justify-between text-sm"><span class="font-medium">{{ l.category.name }}</span><span class="num text-slate-500">{{ l.spent_cents|eur }} / {{ l.available_cents|eur }}</span></div>
+        <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" aria-valuenow="{{ [l.pct, 100]|min }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ l.category.name }}"><div class="h-full rounded-full {{ bar }}" style="width: {{ [l.pct, 100]|min }}%"></div></div></li>
+      {% else %}<li class="py-4 text-center text-sm text-slate-500">Nog geen budgetten ingesteld. <a class="underline" href="{{ url_for('budgets.overview') }}">Stel er een in</a>.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="w-goals">
+    <div class="mb-3 flex items-center justify-between"><h2 id="w-goals" class="font-semibold">Spaardoelen</h2><a class="text-sm text-brand-700 hover:underline dark:text-brand-300" href="{{ url_for('goals.list_view') }}">Alle doelen</a></div>
+    <ul class="space-y-3">
+      {% for p in report.extras.goals %}
+      <li><div class="flex justify-between text-sm"><span class="font-medium">{{ p.goal.name }}
+        {% if p.status == 'achter' %}<span class="badge bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">achter</span>{% elif p.status == 'op_schema' %}<span class="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">op schema</span>{% elif p.status == 'behaald' %}<span class="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">behaald</span>{% endif %}</span>
+        <span class="num text-slate-500">{{ p.current_cents|eur }} / {{ p.goal.target_cents|eur }}</span></div>
+        <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" aria-valuenow="{{ p.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ p.goal.name }}"><div class="h-full rounded-full" style="width: {{ p.pct }}%; background-color: {{ p.goal.color }}"></div></div></li>
+      {% else %}<li class="py-4 text-center text-sm text-slate-500">Nog geen spaardoelen. <a class="underline" href="{{ url_for('goals.list_view') }}">Voeg er een toe</a>.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="w-pending">
+    <div class="mb-1 flex items-center justify-between"><h2 id="w-pending" class="font-semibold">Te bevestigen</h2><a class="text-sm text-brand-700 hover:underline dark:text-brand-300" href="{{ url_for('recurring.list_view') }}">Vaste lasten</a></div>
+    {% set pending = report.extras.pending %}{% include "recurring/_pending.html" %}
+  </section>
+
+  <section class="card" aria-labelledby="w-upcoming">
+    <h2 id="w-upcoming" class="mb-2 font-semibold">Komende 30 dagen</h2>
+    <ul class="divide-y divide-slate-100 text-sm dark:divide-slate-800">
+      {% for u in report.extras.upcoming %}
+      <li class="flex items-center justify-between gap-3 py-2"><span class="num w-20 shrink-0 text-slate-500">{{ u.due|datum }}</span><span class="min-w-0 flex-1 truncate">{{ u.rule.name }}</span>{{ amount(u.rule.amount_cents, u.rule.type) }}</li>
+      {% else %}<li class="py-4 text-center text-slate-500">Geen verwachte vaste lasten.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+
+<section class="card mt-5 !p-0 overflow-hidden" aria-labelledby="w-recent" x-data="bulkSelect()">
+  <div class="flex items-center justify-between px-5 pt-5"><h2 id="w-recent" class="font-semibold">Laatste 10 transacties</h2><a class="text-sm text-brand-700 hover:underline dark:text-brand-300" href="{{ url_for('transactions.list_view') }}">Alle transacties</a></div>
+  <div class="mt-3 overflow-x-auto">
+    <table class="w-full text-left"><tbody>
+      {% for tx in report.extras.recent %}{% set info = infos[tx.id] %}{% include "transactions/_row.html" %}
+      {% else %}<tr><td class="px-5 py-8 text-center text-slate-500">Nog geen transacties. Voeg je eerste toe met de + knop.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</section>
 {% endblock %}

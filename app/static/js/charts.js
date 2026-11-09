@@ -5,16 +5,20 @@
 
   function build(canvas) {
     if (!window.Chart || canvas._chart) return;
+    Chart.defaults.animation = false; // direct tekenen: sneller en toegankelijker
     var cfg;
     try { cfg = JSON.parse(canvas.dataset.chart); } catch (e) { return; }
     var grid = dark() ? "rgba(148,163,184,0.15)" : "rgba(100,116,139,0.15)";
     var text = dark() ? "#cbd5e1" : "#475569";
     var money = cfg.currency !== false;
     var isCircular = cfg.type === "doughnut" || cfg.type === "pie";
+    var links = cfg.links || null;
     canvas._chart = new Chart(canvas, {
       type: cfg.type || "line",
       data: { labels: cfg.labels, datasets: cfg.datasets },
       options: Object.assign({
+        onClick: links ? function (evt, els) { if (els.length && links[els[0].index]) location.href = links[els[0].index]; } : undefined,
+        onHover: links ? function (evt, els) { evt.native.target.style.cursor = els.length ? "pointer" : "default"; } : undefined,
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
