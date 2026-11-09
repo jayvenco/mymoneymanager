@@ -1,0 +1,29 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Rekening bewerken' if account else 'Nieuwe rekening') }}
+<form hx-post="{{ url_for('accounts.update', account_id=account.id) if account else url_for('accounts.create') }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><label class="label" for="a-name">Naam</label><input class="input" id="a-name" name="name" value="{{ values.name }}" required autofocus>{{ field_error(errors, 'name') }}</div>
+    <div><label class="label" for="a-bank">Bank</label><input class="input" id="a-bank" name="bank" value="{{ values.bank }}" placeholder="ING, Rabobank, ABN AMRO…"></div>
+    <div><label class="label" for="a-owner">Eigenaar</label>
+      <select class="input" id="a-owner" name="owner">
+        {% for key, label in owners %}<option value="{{ key }}" {{ 'selected' if values.owner == key }}>{{ label }}</option>{% endfor %}
+      </select>{{ field_error(errors, 'owner') }}</div>
+    <div><label class="label" for="a-type">Type</label>
+      <select class="input" id="a-type" name="type">
+        {% for key, label in types %}<option value="{{ key }}" {{ 'selected' if values.type == key }}>{{ label }}</option>{% endfor %}
+      </select>{{ field_error(errors, 'type') }}</div>
+    <div><label class="label" for="a-bal">Beginsaldo (€)</label><input class="input num" id="a-bal" name="opening_balance" inputmode="decimal" value="{{ values.opening_balance }}">{{ field_error(errors, 'opening_balance') }}</div>
+    <div><label class="label" for="a-date">Per datum</label><input class="input" id="a-date" name="opening_date" type="date" value="{{ values.opening_date }}">{{ field_error(errors, 'opening_date') }}</div>
+    <div><label class="label" for="a-iban">Laatste 4 van IBAN (optioneel)</label><input class="input num" id="a-iban" name="iban_last4" maxlength="4" value="{{ values.iban_last4 }}">{{ field_error(errors, 'iban_last4') }}</div>
+    <div><label class="label" for="a-color">Kleur</label><input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="a-color" name="color" type="color" value="{{ values.color }}"></div>
+  </div>
+  <label class="flex items-start gap-2 text-sm">
+    <input type="checkbox" class="mt-0.5 h-4 w-4 rounded" name="visibility" value="private" {{ 'checked' if values.visibility == 'private' }}>
+    <span><strong>Privé</strong> — alleen de eigenaar en de beheerder zien deze rekening en de bijbehorende transacties.</span>
+  </label>
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary">Opslaan</button>
+  </div>
+</form>
+{{ modal_close() }}

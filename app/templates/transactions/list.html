@@ -1,0 +1,119 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Transacties · {{ app_name }}{% endblock %}
+{% block content %}
+<div x-data="bulkSelect()" @bulk-done.window="clear()">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-bold tracking-tight">Transacties</h1>
+    <div class="flex gap-2">
+      <a class="btn-secondary" href="{{ url_for('categories.list_view') }}">{{ icon('tags') }} Categorieën</a>
+      <button class="btn-primary" hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Transactie</button>
+    </div>
+  </div>
+
+  {# Filters (staan in de URL en zijn dus te bookmarken) #}
+  <form class="card mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" method="get" action="{{ url_for('transactions.list_view') }}"
+        hx-get="{{ url_for('transactions.list_view') }}" hx-target="#tx-results" hx-push-url="true"
+        hx-trigger="change, keyup changed delay:300ms from:#q, input changed delay:400ms from:.num-filter">
+    <div class="sm:col-span-2">
+      <label class="label" for="q">Zoeken</label>
+      <input class="input" id="q" name="q" type="search" value="{{ f.q }}" placeholder="Omschrijving, begunstigde of notitie" autocomplete="off">
+    </div>
+    <div>
+      <label class="label" for="flt-type">Type</label>
+      <select class="input" id="flt-type" name="type">
+        <option value="">Alle</option>
+        {% for v, l in [('expense','Uitgaven'),('income','Inkomsten'),('transfer','Overboekingen')] %}<option value="{{ v }}" {{ 'selected' if f.type == v }}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="flt-account">Rekening</label>
+      <select class="input" id="flt-account" name="account">
+        <option value="">Alle</option>
+        {% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if f.account_id == a.id }}>{{ a.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="flt-category">Categorie</label>
+      <select class="input" id="flt-category" name="category">
+        <option value="">Alle</option>
+        {% for parent, children in categories %}
+          <option value="{{ parent.id }}" {{ 'selected' if f.category_id == parent.id }}>{{ parent.name }}{% if children %} (incl. sub){% endif %}</option>
+          {% for c in children %}<option value="{{ c.id }}" {{ 'selected' if f.category_id == c.id }}>&nbsp;&nbsp;{{ c.name }}</option>{% endfor %}
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="flt-tag">Tag</label>
+      <select class="input" id="flt-tag" name="tag">
+        <option value="">Alle</option>
+        {% for t in tags %}<option value="{{ t.id }}" {{ 'selected' if f.tag_id == t.id }}>{{ t.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="flt-from">Van</label>
+      <input class="input" id="flt-from" type="date" name="from" value="{{ f.date_from.isoformat() if f.date_from }}">
+    </div>
+    <div>
+      <label class="label" for="flt-to">Tot en met</label>
+      <input class="input" id="flt-to" type="date" name="to" value="{{ f.date_to.isoformat() if f.date_to }}">
+    </div>
+    <div>
+      <label class="label" for="flt-min">Min. bedrag</label>
+      <input class="input num num-filter" id="flt-min" name="min" inputmode="decimal" value="{{ (f.min_cents / 100)|string|replace('.', ',') if f.min_cents is not none }}" placeholder="0,00">
+    </div>
+    <div>
+      <label class="label" for="flt-max">Max. bedrag</label>
+      <input class="input num num-filter" id="flt-max" name="max" inputmode="decimal" value="{{ (f.max_cents / 100)|string|replace('.', ',') if f.max_cents is not none }}" placeholder="0,00">
+    </div>
+    <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
+      <a class="btn-ghost w-full" href="{{ url_for('transactions.list_view') }}">Filters wissen</a>
+    </div>
+    <input type="hidden" name="sort" value="{{ f.sort }}"><input type="hidden" name="dir" value="{{ f.direction }}">
+  </form>
+
+  {# Bulkbalk #}
+  <form x-cloak x-show="selected.length" x-data="{ action: 'category' }" hx-post="{{ url_for('transactions.bulk') }}" hx-swap="none"
+        class="sticky top-[68px] z-20 mb-3 flex flex-wrap items-end gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-3 shadow dark:border-brand-800 dark:bg-brand-900/40"
+        @htmx:before-request="if (action === 'delete' && !confirm('Geselecteerde transacties verwijderen?')) $event.preventDefault()">
+    <p class="self-center text-sm font-semibold"><span x-text="selected.length" class="num"></span> geselecteerd</p>
+    <template x-for="id in selected" :key="id"><input type="hidden" name="ids" :value="id"></template>
+    <div>
+      <label class="label" for="bulk-action">Actie</label>
+      <select class="input" id="bulk-action" name="action" x-model="action">
+        <option value="category">Categorie wijzigen</option>
+        <option value="add_tag">Tag toevoegen</option>
+        <option value="remove_tag">Tag verwijderen</option>
+        <option value="account">Rekening wijzigen</option>
+        <option value="delete">Verwijderen</option>
+      </select>
+    </div>
+    <div x-show="action === 'category'">
+      <label class="label" for="bulk-cat">Categorie</label>
+      <select class="input" id="bulk-cat" name="value" :disabled="action !== 'category'">
+        {% for parent, children in categories %}
+          <option value="{{ parent.id }}">{{ parent.name }}</option>
+          {% for c in children %}<option value="{{ c.id }}">&nbsp;&nbsp;{{ c.name }}</option>{% endfor %}
+        {% endfor %}
+      </select>
+    </div>
+    <div x-show="action === 'add_tag' || action === 'remove_tag'" x-cloak>
+      <label class="label" for="bulk-tag">Tag(s), komma-gescheiden</label>
+      <input class="input" id="bulk-tag" name="value" list="bulk-tags" :disabled="action !== 'add_tag' && action !== 'remove_tag'">
+      <datalist id="bulk-tags">{% for t in tags %}<option value="{{ t.name }}">{% endfor %}</datalist>
+    </div>
+    <div x-show="action === 'account'" x-cloak>
+      <label class="label" for="bulk-acc">Rekening</label>
+      <select class="input" id="bulk-acc" name="value" :disabled="action !== 'account'">
+        {% for a in accounts if not a.is_archived %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn" :class="action === 'delete' ? 'btn-danger' : 'btn-primary'" x-text="action === 'delete' ? 'Verwijderen' : 'Toepassen'"></button>
+    <button type="button" class="btn-ghost" @click="clear()">Selectie wissen</button>
+  </form>
+
+  <div id="tx-results" aria-live="polite">
+    {% include "transactions/_results.html" %}
+  </div>
+</div>
+{% endblock %}

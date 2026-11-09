@@ -1,0 +1,126 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Transactie bewerken' if tx else 'Nieuwe transactie') }}
+<form hx-post="{{ url_for('transactions.update', tx_id=tx.id) if tx else url_for('transactions.create') }}"
+      hx-target="#modal-root" hx-swap="innerHTML" class="space-y-4" novalidate
+      x-data="{ type: '{{ values.type or 'expense' }}' }">
+
+  {# Type #}
+  <fieldset>
+    <legend class="sr-only">Type</legend>
+    <div class="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+      {% for value, label in [('expense','Uitgave'),('income','Inkomst'),('transfer','Overboeking')] %}
+        <label class="cursor-pointer">
+          <input type="radio" name="type" value="{{ value }}" class="peer sr-only" x-model="type" {{ 'checked' if values.type == value }}>
+          <span class="flex min-h-[44px] items-center justify-center rounded-lg text-sm font-semibold text-slate-600 peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 dark:text-slate-300 dark:peer-checked:bg-slate-700 dark:peer-checked:text-white">{{ label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {{ field_error(errors, 'type') }}
+  </fieldset>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label" for="f-amount">Bedrag (€)</label>
+      <input class="input num text-lg font-semibold" id="f-amount" name="amount" inputmode="decimal" autocomplete="off" placeholder="0,00"
+             value="{{ values.amount or '' }}" required {% if not tx %}autofocus{% endif %}>
+      {{ field_error(errors, 'amount') }}
+    </div>
+    <div>
+      <label class="label" for="f-date">Datum</label>
+      <input class="input" id="f-date" name="date" type="date" value="{{ values.date }}" required>
+      {{ field_error(errors, 'date') }}
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label" for="f-account"><span x-text="type === 'transfer' ? 'Van rekening' : 'Rekening'"></span></label>
+      <select class="input" id="f-account" name="account_id" required>
+        <option value="">Kies…</option>
+        {% for title, accs in account_groups %}
+          <optgroup label="{{ title }}">
+            {% for a in accs %}<option value="{{ a.id }}" {{ 'selected' if values.account_id|string == a.id|string }}>{{ a.name }}{% if a.visibility == 'private' %} 🔒{% endif %}</option>{% endfor %}
+          </optgroup>
+        {% endfor %}
+      </select>
+      {{ field_error(errors, 'account_id') }}
+    </div>
+
+    <div x-show="type === 'transfer'" x-cloak>
+      <label class="label" for="f-to">Naar rekening</label>
+      <select class="input" id="f-to" name="to_account_id" :disabled="type !== 'transfer'">
+        <option value="">Kies…</option>
+        {% for title, accs in account_groups %}
+          <optgroup label="{{ title }}">
+            {% for a in accs %}<option value="{{ a.id }}" {{ 'selected' if values.to_account_id|string == a.id|string }}>{{ a.name }}</option>{% endfor %}
+          </optgroup>
+        {% endfor %}
+      </select>
+      {{ field_error(errors, 'to_account_id') }}
+    </div>
+
+    {% for kind, tree in [('expense', expense_categories), ('income', income_categories)] %}
+    <div x-show="type === '{{ kind }}'" {% if values.type != kind %}x-cloak{% endif %}>
+      <label class="label" for="f-cat-{{ kind }}">Categorie</label>
+      <select class="input" id="f-cat-{{ kind }}" name="category_id" :disabled="type !== '{{ kind }}'">
+        <option value="">Kies…</option>
+        {% for parent, children in tree %}
+          {% if children %}
+            <optgroup label="{{ parent.name }}">
+              <option value="{{ parent.id }}" {{ 'selected' if values.category_id|string == parent.id|string }}>{{ parent.name }} (algemeen)</option>
+              {% for c in children %}<option value="{{ c.id }}" {{ 'selected' if values.category_id|string == c.id|string }}>{{ c.name }}</option>{% endfor %}
+            </optgroup>
+          {% else %}
+            <option value="{{ parent.id }}" {{ 'selected' if values.category_id|string == parent.id|string }}>{{ parent.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      {{ field_error(errors, 'category_id') }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label" for="f-desc">Omschrijving</label>
+      <input class="input" id="f-desc" name="description" maxlength="255" value="{{ values.description or '' }}">
+      {{ field_error(errors, 'description') }}
+    </div>
+    <div x-show="type !== 'transfer'">
+      <label class="label" for="f-payee">Begunstigde</label>
+      <input class="input" id="f-payee" name="payee" maxlength="120" value="{{ values.payee or '' }}">
+      {{ field_error(errors, 'payee') }}
+    </div>
+  </div>
+
+  {# Tags met suggesties #}
+  <div x-data='tagInput({{ (values.tags or "")|tojson|forceescape }}, {{ all_tags|tojson|forceescape }})' @click.outside="focused = false">
+    <label class="label" for="f-tags">Tags</label>
+    <input type="hidden" name="tags" :value="value">
+    <div class="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-300 px-2 py-1.5 dark:border-slate-700" @click="$refs.t.focus()">
+      <template x-for="(t, i) in tags" :key="t">
+        <span class="badge bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">
+          <span x-text="t"></span>
+          <button type="button" class="ml-0.5 rounded-full hover:bg-brand-200 dark:hover:bg-brand-800" @click.stop="remove(i)" :aria-label="'Verwijder ' + t">×</button>
+        </span>
+      </template>
+      <input x-ref="t" id="f-tags" class="min-w-[8rem] flex-1 border-0 bg-transparent p-1 text-base focus:outline-none focus:ring-0" x-model="text" placeholder="Tag toevoegen…" autocomplete="off"
+             @focus="focused = true" @keydown.enter.prevent="add()" @keydown.comma.prevent="add()" @keydown.backspace="if (!text) tags.pop()">
+    </div>
+    <div x-show="focused && (suggestions.length || text.trim())" x-cloak class="mt-1 flex flex-wrap gap-1.5">
+      <template x-for="s in suggestions" :key="s"><button type="button" class="badge bg-slate-100 hover:bg-slate-200 dark:bg-slate-800" @click="add(s)" x-text="s"></button></template>
+      <button type="button" x-show="text.trim()" class="badge bg-brand-50 text-brand-800 hover:bg-brand-100" @click="add()">+ “<span x-text="text.trim()"></span>” aanmaken</button>
+    </div>
+  </div>
+
+  <div>
+    <label class="label" for="f-notes">Notities</label>
+    <textarea class="input" id="f-notes" name="notes" rows="2">{{ values.notes or '' }}</textarea>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-1">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary min-w-[8rem]">{{ 'Opslaan' if tx else 'Toevoegen' }}</button>
+  </div>
+</form>
+{{ modal_close() }}

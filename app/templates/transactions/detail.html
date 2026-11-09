@@ -1,0 +1,44 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon, amount, member_badge %}
+{% block title %}Transactie · {{ app_name }}{% endblock %}
+{% block content %}
+{% set owner = members.get(tx.account.owner_member_id) if tx.account.owner_member_id else None %}
+<a href="{{ url_for('transactions.list_view') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Terug</a>
+<div class="card">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold">{{ tx.description or tx.payee or 'Transactie' }}</h1>
+      <p class="text-sm text-slate-500">{{ tx.date|datum }} · {{ tx.account.name }} {{ member_badge(owner) }}</p>
+    </div>
+    <p class="text-2xl">{{ amount(tx.amount_cents, tx.type) }}</p>
+  </div>
+  <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+    <div><dt class="text-slate-500">Type</dt><dd>{{ {'income':'Inkomst','expense':'Uitgave','transfer':'Overboeking'}[tx.type] }}{% if info.transfer_label %} ({{ info.transfer_label|lower }}){% endif %}</dd></div>
+    {% if tx.to_account %}<div><dt class="text-slate-500">Naar rekening</dt><dd>{{ tx.to_account.name }}</dd></div>{% endif %}
+    {% if tx.category %}<div><dt class="text-slate-500">Categorie</dt><dd>{{ tx.category.name }}</dd></div>{% endif %}
+    {% if tx.payee %}<div><dt class="text-slate-500">Begunstigde</dt><dd>{{ tx.payee }}</dd></div>{% endif %}
+    <div><dt class="text-slate-500">Tags</dt><dd>{% for t in tx.tags %}<span class="badge" style="background-color: {{ t.color }}22; color: {{ t.color }}">#{{ t.name }}</span> {% else %}—{% endfor %}</dd></div>
+    {% if tx.notes %}<div class="sm:col-span-2"><dt class="text-slate-500">Notities</dt><dd class="whitespace-pre-line">{{ tx.notes }}</dd></div>{% endif %}
+  </dl>
+  <div class="mt-4 flex gap-2">
+    <button class="btn-secondary" hx-get="{{ url_for('transactions.edit_form', tx_id=tx.id) }}" hx-target="#modal-root">{{ icon('pencil') }} Bewerken</button>
+  </div>
+</div>
+
+<h2 class="mt-6 mb-2 text-lg font-semibold">Wijzigingsgeschiedenis</h2>
+<ol class="space-y-3">
+  {% for h in history %}
+    <li class="card !p-4">
+      <p class="text-sm"><strong>{{ {'create':'Aangemaakt','update':'Gewijzigd','delete':'Verwijderd'}[h.entry.action] }}</strong>
+        door {{ h.entry.user.username if h.entry.user else 'onbekend' }} · <span class="num text-slate-500">{{ h.entry.timestamp.strftime('%d-%m-%Y %H:%M') }}</span></p>
+      {% if h.changes and h.entry.action == 'update' %}
+        <ul class="mt-2 space-y-1 text-sm">
+          {% for label, old, new in h.changes %}<li><span class="text-slate-500">{{ label }}:</span> <s class="text-slate-400">{{ old }}</s> → <strong>{{ new }}</strong></li>{% endfor %}
+        </ul>
+      {% endif %}
+    </li>
+  {% else %}
+    <li class="text-sm text-slate-500">Nog geen geschiedenis.</li>
+  {% endfor %}
+</ol>
+{% endblock %}

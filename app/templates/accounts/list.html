@@ -1,0 +1,59 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon, member_badge %}
+{% block title %}Rekeningen · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Rekeningen</h1>
+    <p class="text-slate-600 dark:text-slate-300">Totaal saldo: <strong class="num">{{ total|eur }}</strong></p>
+  </div>
+  <div class="flex gap-2">
+    <a class="btn-secondary" href="{{ url_for('accounts.list_view', archief=0 if show_archived else 1) }}">{{ icon('archive') }} {{ 'Verberg archief' if show_archived else 'Toon archief' }}</a>
+    <button class="btn-primary" hx-get="{{ url_for('accounts.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Rekening</button>
+  </div>
+</div>
+
+{% for g in groups %}
+<section class="mb-8" aria-labelledby="grp-{{ loop.index }}">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 id="grp-{{ loop.index }}" class="flex items-center gap-2 text-lg font-semibold">{{ member_badge(g.member) }}</h2>
+    <p class="text-sm text-slate-500">Subtotaal <strong class="num text-slate-900 dark:text-slate-100">{{ g.subtotal|eur }}</strong></p>
+  </div>
+  {% if g.accounts %}
+  <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" x-data x-sortable data-sortable="{{ url_for('accounts.reorder') }}">
+    {% for a in g.accounts %}
+    <li draggable="true" data-id="{{ a.id }}" class="card flex flex-col gap-3 !p-4 {{ 'opacity-60' if a.is_archived }}">
+      <div class="flex items-start justify-between gap-2">
+        <a href="{{ url_for('accounts.detail', account_id=a.id) }}" class="flex min-w-0 items-center gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style="background-color: {{ a.color }}">{{ icon(a.icon) }}</span>
+          <span class="min-w-0">
+            <span class="block truncate font-semibold">{{ a.name }}{% if a.visibility == 'private' %} {{ icon('lock', '!h-3.5 !w-3.5 text-slate-400') }}{% endif %}</span>
+            <span class="block truncate text-xs text-slate-500">{{ a.bank or '—' }}{% if a.iban_last4 %} · …{{ a.iban_last4 }}{% endif %}{% if a.is_archived %} · gearchiveerd{% endif %}</span>
+          </span>
+        </a>
+        {% if can_manage(a) %}
+        <div class="flex shrink-0">
+          <button class="btn-ghost !min-h-[36px] !px-2" hx-get="{{ url_for('accounts.edit_form', account_id=a.id) }}" hx-target="#modal-root" aria-label="Rekening bewerken">{{ icon('pencil') }}</button>
+          <button class="btn-ghost !min-h-[36px] !px-2" hx-post="{{ url_for('accounts.archive', account_id=a.id) }}" hx-swap="none" aria-label="{{ 'Herstellen' if a.is_archived else 'Archiveren' }}">{{ icon('archive') }}</button>
+        </div>
+        {% endif %}
+      </div>
+      <div class="flex items-end justify-between gap-3">
+        <p class="num text-2xl font-bold {{ 'text-red-600' if balances.get(a.id, 0) < 0 }}">{{ balances.get(a.id, 0)|eur }}</p>
+        {% if sparks.get(a.id) %}
+        <svg viewBox="0 0 96 28" class="h-7 w-24 shrink-0" role="img" aria-label="Saldo laatste 30 dagen"><polyline points="{{ sparks[a.id] }}" fill="none" stroke="{{ a.color }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        {% endif %}
+      </div>
+      <button class="btn-ghost !min-h-[36px] justify-start !px-2 text-xs" hx-get="{{ url_for('accounts.reconcile_form', account_id=a.id) }}" hx-target="#modal-root">{{ icon('shield-check', '!h-4 !w-4') }} Saldo controleren</button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="card text-center text-slate-500">
+    <p>Nog geen rekeningen voor {{ g.title }}.</p>
+    <button class="btn-secondary mt-3" hx-get="{{ url_for('accounts.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Rekening toevoegen</button>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

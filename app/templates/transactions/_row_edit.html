@@ -1,0 +1,29 @@
+{% from "_macros.html" import icon %}
+<tr id="tx-{{ tx.id }}" class="border-b border-brand-200 bg-brand-50/60 dark:border-brand-900 dark:bg-brand-900/20" x-data @keydown.escape="htmx.ajax('GET', '{{ url_for('transactions.row', tx_id=tx.id) }}', {target: '#tx-{{ tx.id }}', swap: 'outerHTML'})">
+  <td class="py-3 pl-3 pr-1"></td>
+  <td class="px-2 py-3"><input class="input !py-1.5" type="date" name="date" value="{{ tx.date.isoformat() }}" aria-label="Datum"></td>
+  <td class="px-2 py-3">
+    <input class="input !py-1.5" name="description" value="{{ tx.description }}" aria-label="Omschrijving" maxlength="255">
+    {% if errors %}<p class="field-error">{{ errors.values()|join(' · ') }}</p>{% endif %}
+  </td>
+  <td class="hidden px-2 py-3 md:table-cell">
+    {% if tx.type != 'transfer' %}
+    <select class="input !py-1.5" name="category_id" aria-label="Categorie">
+      {% for parent, children in categories %}
+        {% if children %}
+          <optgroup label="{{ parent.name }}">
+            <option value="{{ parent.id }}" {{ 'selected' if tx.category_id == parent.id }}>{{ parent.name }} (algemeen)</option>
+            {% for c in children %}<option value="{{ c.id }}" {{ 'selected' if tx.category_id == c.id }}>{{ c.name }}</option>{% endfor %}
+          </optgroup>
+        {% else %}<option value="{{ parent.id }}" {{ 'selected' if tx.category_id == parent.id }}>{{ parent.name }}</option>{% endif %}
+      {% endfor %}
+    </select>
+    {% endif %}
+  </td>
+  <td class="hidden px-2 py-3 text-sm text-slate-500 lg:table-cell">{{ tx.account.name }}</td>
+  <td class="px-2 py-3"><input class="input num !py-1.5 text-right" name="amount" value="{{ amount_value }}" inputmode="decimal" aria-label="Bedrag"></td>
+  <td class="whitespace-nowrap py-2 pl-1 pr-3 text-right">
+    <button class="btn-primary !min-h-[36px] !px-3" hx-post="{{ url_for('transactions.inline_save', tx_id=tx.id) }}" hx-include="closest tr" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML" aria-label="Opslaan">{{ icon('check') }}</button>
+    <button class="btn-ghost !min-h-[36px] !px-2" hx-get="{{ url_for('transactions.row', tx_id=tx.id) }}" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML" aria-label="Annuleren">{{ icon('x') }}</button>
+  </td>
+</tr>

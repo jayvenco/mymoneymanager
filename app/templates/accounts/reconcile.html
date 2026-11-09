@@ -1,0 +1,21 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Saldo controleren: ' ~ account.name) }}
+<form hx-post="{{ url_for('accounts.reconcile', account_id=account.id) }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <p class="text-sm text-slate-600 dark:text-slate-300">Vul het echte banksaldo in op een bepaalde datum. Wijkt het af van de administratie, dan kun je direct een correctie aanmaken (categorie “Correctie”, standaard buiten de rapportages).</p>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><label class="label" for="r-actual">Saldo volgens de bank (€)</label><input class="input num" id="r-actual" name="actual" inputmode="decimal" value="{{ values.get('actual', '') }}" autofocus>{{ field_error(errors, 'actual') }}</div>
+    <div><label class="label" for="r-date">Op datum</label><input class="input" id="r-date" name="date" type="date" value="{{ values.get('date', today) }}">{{ field_error(errors, 'date') }}</div>
+  </div>
+  {% if diff is defined %}
+    <div class="rounded-xl p-3 text-sm {{ 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' if diff == 0 else 'bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200' }}" role="status">
+      {% if diff == 0 %}Het saldo klopt: {{ booked|eur }}.
+      {% else %}Administratie: <strong class="num">{{ booked|eur }}</strong> · Bank: <strong class="num">{{ actual|eur }}</strong> · Verschil: <strong class="num">{{ diff|eur(sign=True) }}</strong>{% endif %}
+    </div>
+  {% endif %}
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Sluiten</button>
+    <button class="btn-secondary">Controleren</button>
+    {% if diff is defined and diff != 0 %}<button class="btn-primary" name="action" value="correct">Correctie aanmaken</button>{% endif %}
+  </div>
+</form>
+{{ modal_close() }}

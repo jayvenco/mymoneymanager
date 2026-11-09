@@ -1,0 +1,57 @@
+{% from "_macros.html" import icon %}
+{% macro sort_link(key, label, align='') %}
+  {% set is_active = f.sort == key %}
+  {% set next_dir = 'asc' if (is_active and f.direction == 'desc') else 'desc' %}
+  <a href="{{ url_for('transactions.list_view', **dict(query, sort=key, dir=next_dir)) }}"
+     hx-get="{{ url_for('transactions.list_view', **dict(query, sort=key, dir=next_dir)) }}" hx-target="#tx-results" hx-push-url="true"
+     class="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white" {% if is_active %}aria-sort="{{ 'ascending' if f.direction == 'asc' else 'descending' }}"{% endif %}>
+    {{ label }}{% if is_active %}{{ icon('arrow-up' if f.direction == 'asc' else 'arrow-down', '!h-3.5 !w-3.5') }}{% endif %}
+  </a>
+{% endmacro %}
+
+<div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-300">
+  <p><strong class="num">{{ page.total }}</strong> transacties</p>
+  <p class="num">
+    <span class="text-emerald-600 dark:text-emerald-400">+{{ page.sum_income|eur }}</span> inkomsten ·
+    <span>-{{ page.sum_expense|eur }}</span> uitgaven
+  </p>
+</div>
+
+{% if page.items %}
+<div class="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+  <table class="w-full text-left">
+    <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900/60">
+      <tr>
+        <th class="w-10 py-3 pl-3 pr-1"><input type="checkbox" class="h-4 w-4 rounded" @change="toggleAll($event.target.checked)" aria-label="Alles selecteren"></th>
+        <th class="px-2 py-3">{{ sort_link('date', 'Datum') }}</th>
+        <th class="px-2 py-3">{{ sort_link('description', 'Omschrijving') }}</th>
+        <th class="hidden px-2 py-3 md:table-cell">{{ sort_link('category', 'Categorie') }}</th>
+        <th class="hidden px-2 py-3 lg:table-cell">{{ sort_link('account', 'Rekening') }}</th>
+        <th class="px-2 py-3 text-right">{{ sort_link('amount', 'Bedrag') }}</th>
+        <th class="w-36 py-3 pr-3"><span class="sr-only">Acties</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tx in page.items %}
+        {% set info = infos[tx.id] %}
+        {% include "transactions/_row.html" %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page.pages > 1 %}
+<nav class="mt-4 flex items-center justify-center gap-2" aria-label="Paginering">
+  {% for n in range(1, page.pages + 1) if n == 1 or n == page.pages or (n - page.page)|abs <= 2 %}
+    <a href="{{ url_for('transactions.list_view', **dict(query, page=n)) }}" hx-get="{{ url_for('transactions.list_view', **dict(query, page=n)) }}" hx-target="#tx-results" hx-push-url="true"
+       class="btn {{ 'bg-brand-700 text-white' if n == page.page else 'btn-secondary' }} !min-h-[40px] !px-3 num" {% if n == page.page %}aria-current="page"{% endif %}>{{ n }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+{% else %}
+<div class="card py-12 text-center">
+  <p class="text-lg font-semibold">Geen transacties gevonden</p>
+  <p class="mt-1 text-slate-500">Pas je filters aan of voeg een nieuwe transactie toe.</p>
+  <button class="btn-primary mt-4" hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Transactie toevoegen</button>
+</div>
+{% endif %}
