@@ -1,0 +1,23 @@
+services:
+  mymoneymanager:
+    image: ghcr.io/jayvenco/mymoneymanager:latest
+    container_name: mymoneymanager
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SECRET_KEY: "${SECRET_KEY:?Stel SECRET_KEY in (openssl rand -hex 32)}"
+      TZ: "${TZ:-Europe/Amsterdam}"
+      PUID: "${PUID:-99}"
+      PGID: "${PGID:-100}"
+      UMASK: "${UMASK:-022}"
+      HTTPS: "${HTTPS:-false}"
+      SESSION_LIFETIME_DAYS: "${SESSION_LIFETIME_DAYS:-7}"
+      BACKUP_TIME: "${BACKUP_TIME:-03:00}"
+      BACKUP_RETENTION_DAILY: "${BACKUP_RETENTION_DAILY:-14}"
+      BACKUP_RETENTION_WEEKLY: "${BACKUP_RETENTION_WEEKLY:-8}"
+      BACKUP_RETENTION_MONTHLY: "${BACKUP_RETENTION_MONTHLY:-12}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    volumes:
+      - /mnt/user/appdata/mymoneymanager/data:/data
+      - /mnt/user/appdata/mymoneymanager/backups:/backups
