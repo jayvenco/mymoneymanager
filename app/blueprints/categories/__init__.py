@@ -9,6 +9,7 @@ from sqlalchemy import func, select, update
 
 from ...extensions import db
 from ...models import Category, Tag, Transaction, TransactionTag
+from ...services import access
 from ...services.household import household_id
 from ...services.transactions import _int, write_audit
 
@@ -305,9 +306,14 @@ def delete(category_id: int):
 @login_required
 def tags_view():
     rows = db.session.execute(
-        select(Tag, func.count(TransactionTag.c.transaction_id))
+        select(Tag, func.count(Transaction.id))
         .outerjoin(TransactionTag, TransactionTag.c.tag_id == Tag.id)
-        .where(Tag.household_id == household_id())
+        .outerjoin(
+            Transaction,
+            (Transaction.id == TransactionTag.c.transaction_id)
+            & access.transaction_visibility_clause(),
+        )
+        .where(Tag.household_id == household_id(), access.tag_visibility_clause())
         .group_by(Tag.id)
         .order_by(func.lower(Tag.name))
     ).all()
@@ -315,8 +321,10 @@ def tags_view():
 
 
 def _tag(tag_id: int) -> Tag:
-    tag = db.session.get(Tag, tag_id)
-    if tag is None or tag.household_id != household_id():
+    tag = db.session.execute(
+        access.visible_tags().where(Tag.id == tag_id, Tag.household_id == household_id())
+    ).scalar_one_or_none()
+    if tag is None:
         abort(404)
     return tag
 
@@ -353,7 +361,7 @@ def tag_update(tag_id: int):
     if not _COLOR.match(color):
         errors["color"] = "Ongeldige kleur."
     if errors:
-        others = db.session.execute(select(Tag).where(Tag.id != tag.id)).scalars()
+        others = db.session.execute(access.visible_tags().where(Tag.id != tag.id)).scalars()
         return render_template(
             "categories/tag_form.html", tag=tag, others=list(others), errors=errors
         ), 422

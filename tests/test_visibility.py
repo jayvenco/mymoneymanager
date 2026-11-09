@@ -116,3 +116,29 @@ def test_non_owner_cannot_manage_foreign_account(partner_client, ids):
     shared_admin = ids["acc"]["Betaal Admin"]
     assert partner_client.get(f"/rekeningen/{shared_admin}/bewerken").status_code == 403
     assert partner_client.post(f"/rekeningen/{shared_admin}", data={"name": "x"}).status_code == 403
+
+
+def test_tags_from_private_transactions_do_not_leak(app, configured, partner_client, ids):
+    configured.post(
+        "/transacties/",
+        data=tx_form(
+            ids, account_id=ids["acc"]["Prive Admin"], tags="verrassingsfeest", description="Prive"
+        ),
+    )
+    configured.post("/transacties/", data=tx_form(ids, tags="gewoon"))
+    for url in (
+        "/categorieen/tags",
+        "/transacties/",
+        "/transacties/nieuw",
+        "/transacties/tags/zoek?q=verr",
+    ):
+        html = partner_client.get(url).get_data(as_text=True)
+        assert "verrassingsfeest" not in html, url
+    assert "gewoon" in partner_client.get("/categorieen/tags").get_data(as_text=True)
+    assert "verrassingsfeest" in configured.get("/categorieen/tags").get_data(as_text=True)
+    from app.models import Tag
+
+    with app.app_context():
+        hidden = db.session.query(Tag).filter_by(name="verrassingsfeest").one().id
+    assert partner_client.get(f"/categorieen/tags/{hidden}/bewerken").status_code == 404
+    assert partner_client.post(f"/categorieen/tags/{hidden}/verwijder").status_code == 404

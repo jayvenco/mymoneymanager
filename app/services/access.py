@@ -11,7 +11,7 @@ from flask_login import current_user
 from sqlalchemy import Select, and_, false, or_, select
 
 from ..extensions import db
-from ..models import Account, Transaction
+from ..models import Account, Tag, Transaction, TransactionTag
 
 
 def _user(user=None):
@@ -70,3 +70,30 @@ def get_visible_transaction(tx_id: int, user=None) -> Transaction | None:
 def get_visible_account(account_id: int, user=None) -> Account | None:
     stmt = visible_accounts(user).where(Account.id == account_id)
     return db.session.execute(stmt).scalar_one_or_none()
+
+
+def tag_visibility_clause(user=None):
+    """Een tag is zichtbaar als hij nergens in gebruik is of op minstens één zichtbare transactie staat.
+
+    Zo lekken tagnamen (en tellingen) van privé-transacties niet naar andere logins.
+    """
+    # Aliassen, zodat de subqueries niet met een buitenste join op transaction_tag correleren.
+    any_use = TransactionTag.alias("tt_any")
+    vis_use = TransactionTag.alias("tt_vis")
+    used_any = select(any_use.c.tag_id).where(any_use.c.tag_id == Tag.id).correlate(Tag).exists()
+    used_visible = (
+        select(vis_use.c.tag_id)
+        .where(
+            vis_use.c.tag_id == Tag.id,
+            vis_use.c.transaction_id.in_(
+                select(Transaction.id).where(transaction_visibility_clause(user))
+            ),
+        )
+        .correlate(Tag)
+        .exists()
+    )
+    return or_(~used_any, used_visible)
+
+
+def visible_tags(user=None) -> Select:
+    return select(Tag).where(tag_visibility_clause(user))

@@ -126,7 +126,7 @@ def form_context(tx: Transaction | None = None, form=None, errors=None) -> dict:
         "all_tags": [
             t.name
             for t in db.session.execute(
-                select(Tag).where(Tag.household_id == household_id()).order_by(Tag.name)
+                access.visible_tags().where(Tag.household_id == household_id()).order_by(Tag.name)
             ).scalars()
         ],
     }
@@ -166,7 +166,7 @@ def list_view():
     tags = db.session.execute(
         select(Tag, func.count(TransactionTag.c.transaction_id))
         .outerjoin(TransactionTag, TransactionTag.c.tag_id == Tag.id)
-        .where(Tag.household_id == household_id())
+        .where(Tag.household_id == household_id(), access.tag_visibility_clause())
         .group_by(Tag.id)
         .order_by(Tag.name)
     ).all()
@@ -393,7 +393,12 @@ def detail(tx_id: int):
 @login_required
 def tag_search():
     q = (request.args.get("q") or "").strip().lower()
-    stmt = select(Tag.name).where(Tag.household_id == household_id()).order_by(Tag.name).limit(20)
+    stmt = (
+        select(Tag.name)
+        .where(Tag.household_id == household_id(), access.tag_visibility_clause())
+        .order_by(Tag.name)
+        .limit(20)
+    )
     if q:
         stmt = stmt.where(func.lower(Tag.name).like(f"%{q}%"))
     return {"tags": list(db.session.execute(stmt).scalars())}
