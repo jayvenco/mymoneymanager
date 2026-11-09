@@ -11,7 +11,7 @@
   "dependencies": {
     "alpinejs": "3.14.3",
     "chart.js": "4.4.6",
-    "htmx.org": "2.0.3",
+    "htmx.org": "2.0.11",
     "lucide-static": "0.460.0"
   },
   "devDependencies": {
