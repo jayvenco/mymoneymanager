@@ -1,3 +1,5 @@
+<p align="center"><img src="app/static/img/logo.png" alt="MyMoneyManager" width="200"></p>
+
 # MyMoneyManager
 
 Zelf gehost huishoudboekje voor **twee partners**: inkomsten, uitgaven, budgetten, vaste lasten, spaardoelen en uitgebreide rapportages — met eigen rekeningen per persoon, gezamenlijke rekeningen en optionele privé-rekeningen. Eén Docker-container met SQLite, geheel in het Nederlands, bedoeld voor **Unraid** maar draait overal waar Docker draait. De app maakt **geen externe verbindingen**: alle assets zijn lokaal gebundeld.

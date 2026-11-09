@@ -5,7 +5,7 @@
 <a href="{{ url_for('settings.index') }}" class="btn-ghost -ml-3 mb-2">{{ icon('chevron-left') }} Instellingen</a>
 <h1 class="mb-5 text-2xl font-bold tracking-tight">Over {{ app_name }}</h1>
 <div class="card max-w-lg">
-  <div class="mb-4 flex items-center gap-3"><img src="{{ url_for('static', filename='icons/icon.svg') }}" alt="" class="h-12 w-12"><div><p class="font-semibold">{{ app_name }}</p><p class="text-sm text-slate-500">Zelf gehost huishoudboekje voor twee partners</p></div></div>
+  <div class="mb-4 flex items-center gap-3"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="{{ app_name }}" width="96" height="96" class="h-24 w-24 rounded-2xl"><div><p class="font-semibold">{{ app_name }}</p><p class="text-sm text-slate-500">Zelf gehost huishoudboekje voor twee partners</p></div></div>
   <dl class="grid grid-cols-3 gap-y-2 text-sm">
     <dt class="text-slate-500">Versie</dt><dd class="col-span-2 num">{{ version }}</dd>
     <dt class="text-slate-500">Git-commit</dt><dd class="col-span-2 num break-all">{{ sha }}</dd>

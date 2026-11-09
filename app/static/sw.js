@@ -3,7 +3,7 @@
 const CACHE = "mmm-static-v1";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(["/static/icons/icon.svg"])).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(["/static/img/mark.png"])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {

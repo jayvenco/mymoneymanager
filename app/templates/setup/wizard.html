@@ -5,7 +5,7 @@
 <main id="main" class="mx-auto min-h-screen w-full max-w-2xl px-4 py-8"
       x-data="setupWizard({{ ({'errors': errors, 'form': {'accounts': form.get('accounts', '')}}) | tojson | forceescape }})">
   <div class="mb-6 flex items-center gap-3">
-    <img src="{{ url_for('static', filename='icons/icon.svg') }}" alt="" class="h-11 w-11">
+    <img src="{{ url_for('static', filename='img/mark.png') }}" alt="" width="44" height="44" class="h-11 w-11 rounded-xl">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Welkom bij {{ app_name }}</h1>
       <p class="text-sm text-slate-600 dark:text-slate-300">In vier korte stappen is je huishouden klaar.</p>
