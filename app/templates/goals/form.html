@@ -1,0 +1,24 @@
+{% from "_macros.html" import icon, modal_open, modal_close, field_error %}
+{{ modal_open('Spaardoel bewerken' if goal else 'Nieuw spaardoel') }}
+<form hx-post="{{ url_for('goals.update', goal_id=goal.id) if goal else url_for('goals.create') }}" hx-target="#modal-root" class="space-y-4" novalidate>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="sm:col-span-2"><label class="label" for="g-name">Naam</label><input class="input" id="g-name" name="name" value="{{ values.name }}" placeholder="Vakantie, buffer, nieuwe auto…" autofocus>{{ field_error(errors, 'name') }}</div>
+    <div><label class="label" for="g-acc">Spaarrekening</label>
+      <select class="input" id="g-acc" name="account_id"><option value="">Kies…</option>
+        {% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if values.account_id|string == a.id|string }}>{{ a.name }}</option>{% endfor %}
+      </select>{{ field_error(errors, 'account_id') }}</div>
+    <div><label class="label" for="g-member">Voor</label>
+      <select class="input" id="g-member" name="member_id"><option value="">Gezamenlijk doel</option>
+        {% for m in members %}<option value="{{ m.id }}" {{ 'selected' if values.member_id|string == m.id|string }}>{{ m.name }}</option>{% endfor %}
+      </select></div>
+    <div><label class="label" for="g-target">Doelbedrag (€)</label><input class="input num" id="g-target" name="target" inputmode="decimal" value="{{ values.target }}">{{ field_error(errors, 'target') }}</div>
+    <div><label class="label" for="g-date">Streefdatum (optioneel)</label><input class="input" id="g-date" name="target_date" type="date" value="{{ values.target_date }}">{{ field_error(errors, 'target_date') }}</div>
+    <div><label class="label" for="g-color">Kleur</label><input class="h-11 w-full cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700" id="g-color" name="color" type="color" value="{{ values.color }}"></div>
+  </div>
+  <p class="text-xs text-slate-500">De voortgang is het huidige saldo van de gekoppelde rekening.</p>
+  <div class="flex justify-end gap-2">
+    <button type="button" class="btn-ghost" onclick="mmmCloseModal()">Annuleren</button>
+    <button class="btn-primary">Opslaan</button>
+  </div>
+</form>
+{{ modal_close() }}

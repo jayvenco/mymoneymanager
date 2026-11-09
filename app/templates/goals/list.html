@@ -1,0 +1,49 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon, member_badge %}
+{% block title %}Spaardoelen · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold tracking-tight">Spaardoelen</h1>
+  <button class="btn-primary" hx-get="{{ url_for('goals.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Spaardoel</button>
+</div>
+{% if items %}
+<ul class="grid gap-4 md:grid-cols-2">
+  {% for p in items %}
+  {% set g = p.goal %}
+  <li class="card">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <h2 class="text-lg font-semibold">{{ g.name }}</h2>
+        <p class="text-sm text-slate-500">{{ g.account.name }}{% if g.target_date %} · doel: {{ g.target_date|datum }}{% endif %}</p>
+      </div>
+      <div class="flex shrink-0 items-center gap-1">
+        {% if p.status == 'behaald' %}<span class="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">Behaald</span>
+        {% elif p.status == 'op_schema' %}<span class="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">Op schema</span>
+        {% elif p.status == 'achter' %}<span class="badge bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">Achter</span>{% endif %}
+        <button class="btn-ghost !min-h-[34px] !px-2" hx-get="{{ url_for('goals.edit_form', goal_id=g.id) }}" hx-target="#modal-root" aria-label="Spaardoel bewerken">{{ icon('pencil') }}</button>
+        <button class="btn-ghost !min-h-[34px] !px-2 text-red-600" hx-post="{{ url_for('goals.delete', goal_id=g.id) }}" hx-swap="none" hx-confirm="Dit spaardoel verwijderen?" aria-label="Spaardoel verwijderen">{{ icon('trash-2') }}</button>
+      </div>
+    </div>
+    <div class="mt-4 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" aria-valuenow="{{ p.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }}: {{ p.pct }}%">
+      <div class="h-full rounded-full" style="width: {{ p.pct }}%; background-color: {{ g.color }}"></div>
+    </div>
+    <div class="mt-2 flex justify-between text-sm"><span class="num"><strong>{{ p.current_cents|eur }}</strong> van {{ g.target_cents|eur }}</span><span class="num text-slate-500">{{ p.pct }}%</span></div>
+    <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+      <div><dt class="text-slate-500">Nog te sparen</dt><dd class="num font-semibold">{{ p.remaining_cents|eur }}</dd></div>
+      {% if p.needed_monthly_cents is not none and p.status != 'behaald' %}
+      <div><dt class="text-slate-500">Nodig per maand</dt><dd class="num font-semibold">{{ p.needed_monthly_cents|eur }}</dd></div>
+      <div><dt class="text-slate-500">Gemiddeld gespaard (3 mnd)</dt><dd class="num">{{ p.actual_monthly_cents|eur }} / mnd</dd></div>
+      {% endif %}
+      <div><dt class="text-slate-500">Eigenaar</dt><dd>{% if g.member_id %}{{ g.account.owner.name if g.account.owner else '—' }}{% else %}Gezamenlijk{% endif %}</dd></div>
+    </dl>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="card py-12 text-center">
+  <p class="text-lg font-semibold">Nog geen spaardoelen</p>
+  <p class="mx-auto mt-1 max-w-md text-slate-500">Koppel een doel aan een spaarrekening en zie of je op schema ligt.</p>
+  <button class="btn-primary mt-4" hx-get="{{ url_for('goals.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Spaardoel toevoegen</button>
+</div>
+{% endif %}
+{% endblock %}
