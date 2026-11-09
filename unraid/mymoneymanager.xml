@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>MyMoneyManager</Name>
+  <Repository>ghcr.io/jayvenco/mymoneymanager:latest</Repository>
+  <Registry>https://github.com/jayvenco/mymoneymanager/pkgs/container/mymoneymanager</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/jayvenco/mymoneymanager/issues</Support>
+  <Project>https://github.com/jayvenco/mymoneymanager</Project>
+  <Overview>MyMoneyManager is een zelf gehost huishoudboekje voor twee partners: inkomsten, uitgaven, budgetten, vaste lasten, spaardoelen en uitgebreide rapportages, met aparte en gezamenlijke rekeningen. Eén container met SQLite, geheel Nederlands, werkt volledig offline.</Overview>
+  <Category>Productivity: Tools: Finance:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/mymoneymanager.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/jayvenco/mymoneymanager/main/unraid/icon.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web-poort" Target="8080" Default="8080" Mode="tcp" Description="Poort van de webinterface (standaard 8080)." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Data (database)" Target="/data" Default="/mnt/user/appdata/mymoneymanager/data" Mode="rw" Description="Hier staat de SQLite-database. Gebruik bij voorkeur een share op de cache/pool, bij voorkeur als exclusive share (of /mnt/cache/appdata/...), om FUSE-overhead en WAL-lockproblemen te vermijden." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mymoneymanager/data</Config>
+  <Config Name="Back-ups" Target="/backups" Default="/mnt/user/appdata/mymoneymanager/backups" Mode="rw" Description="Hier komen de automatische back-ups. Neem deze map op in de Appdata Backup-plug-in of een offsite sync." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mymoneymanager/backups</Config>
+  <Config Name="SECRET_KEY" Target="SECRET_KEY" Default="" Mode="" Description="VERPLICHT. Lange willekeurige tekst voor sessies en CSRF-bescherming (genereer met: openssl rand -hex 32). Zonder dit start de app niet." Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="Gebruikers-ID waaronder de app draait (Unraid: 99 = nobody)." Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Groeps-ID waaronder de app draait (Unraid: 100 = users)." Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="" Description="Umask voor nieuwe bestanden (standaard 022)." Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <Config Name="Tijdzone" Target="TZ" Default="Europe/Amsterdam" Mode="" Description="Tijdzone van de app (bepaalt o.a. het tijdstip van back-ups)." Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Amsterdam</Config>
+  <Config Name="HTTPS" Target="HTTPS" Default="false" Mode="" Description="Zet op true wanneer de app achter HTTPS (reverse proxy) draait: dan krijgen cookies de Secure-vlag." Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="Sessieduur (dagen)" Target="SESSION_LIFETIME_DAYS" Default="7" Mode="" Description="Aantal dagen dat een login geldig blijft." Type="Variable" Display="advanced" Required="false" Mask="false">7</Config>
+  <Config Name="Back-uptijd" Target="BACKUP_TIME" Default="03:00" Mode="" Description="Tijdstip (HH:MM) van de dagelijkse automatische back-up. Ook in de app aan te passen." Type="Variable" Display="advanced" Required="false" Mask="false">03:00</Config>
+  <Config Name="Bewaar dagelijks" Target="BACKUP_RETENTION_DAILY" Default="14" Mode="" Description="Aantal dagelijkse back-ups dat bewaard blijft." Type="Variable" Display="advanced" Required="false" Mask="false">14</Config>
+  <Config Name="Bewaar wekelijks" Target="BACKUP_RETENTION_WEEKLY" Default="8" Mode="" Description="Aantal wekelijkse back-ups dat bewaard blijft." Type="Variable" Display="advanced" Required="false" Mask="false">8</Config>
+  <Config Name="Bewaar maandelijks" Target="BACKUP_RETENTION_MONTHLY" Default="12" Mode="" Description="Aantal maandelijkse back-ups dat bewaard blijft." Type="Variable" Display="advanced" Required="false" Mask="false">12</Config>
+  <Config Name="Logniveau" Target="LOG_LEVEL" Default="INFO" Mode="" Description="DEBUG, INFO, WARNING of ERROR." Type="Variable" Display="advanced" Required="false" Mask="false">INFO</Config>
+</Container>
