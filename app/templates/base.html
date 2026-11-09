@@ -8,13 +8,13 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='vendor/htmx.min.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='js/charts.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='vendor/alpine.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=app_version) }}">
+  <script src="{{ url_for('static', filename='js/theme.js', v=app_version) }}"></script>
+  <script defer src="{{ url_for('static', filename='vendor/htmx.min.js', v=app_version) }}"></script>
+  <script defer src="{{ url_for('static', filename='vendor/chart.umd.js', v=app_version) }}"></script>
+  <script defer src="{{ url_for('static', filename='js/charts.js', v=app_version) }}"></script>
+  <script defer src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
+  <script defer src="{{ url_for('static', filename='vendor/alpine.min.js', v=app_version) }}"></script>
   {% block head %}{% endblock %}
 </head>
 <body class="min-h-screen" hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>

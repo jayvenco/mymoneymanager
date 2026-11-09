@@ -55,13 +55,14 @@ def _configure_logging(level: str) -> None:
     root.setLevel(level)
 
 
+# (endpoint, label, icoon, korte label voor de onderbalk op mobiel)
 NAV_ITEMS = [
-    ("reports.overview", "Rapportages", "bar-chart-3"),
-    ("transactions.list_view", "Transacties", "arrow-left-right"),
-    ("accounts.list_view", "Rekeningen", "wallet"),
-    ("budgets.overview", "Budgetten", "gauge"),
-    ("goals.list_view", "Spaardoelen", "piggy-bank"),
-    ("settings.index", "Instellingen", "settings"),
+    ("reports.overview", "Rapportages", "bar-chart-3", "Rapport"),
+    ("transactions.list_view", "Transacties", "arrow-left-right", "Transacties"),
+    ("accounts.list_view", "Rekeningen", "wallet", "Rekeningen"),
+    ("budgets.overview", "Budgetten", "gauge", "Budgetten"),
+    ("goals.list_view", "Spaardoelen", "piggy-bank", "Sparen"),
+    ("settings.index", "Instellingen", "settings", "Opties"),
 ]
 
 
@@ -197,11 +198,67 @@ def _register_hooks(app: Flask) -> None:
             response.headers["Cache-Control"] = "no-store"
         return response
 
+    compressible = {
+        "text/html", "text/css", "text/csv", "text/plain", "text/javascript",
+        "application/javascript", "application/json", "image/svg+xml", "application/manifest+json",
+    }  # fmt: skip
+    gzip_cache: dict[tuple, bytes] = {}
+
+    @app.after_request
+    def compress_and_cache(response):
+        if request.endpoint == "static" and response.status_code == 200:
+            immutable = app.config["APP_VERSION"] != "dev" and request.args.get("v")
+            response.headers["Cache-Control"] = (
+                "public, max-age=31536000, immutable" if immutable else "no-cache"
+            )
+        mimetype = (response.mimetype or "").lower()
+        if (
+            response.status_code != 200
+            or "gzip" not in request.headers.get("Accept-Encoding", "")
+            or mimetype not in compressible
+            or "Content-Encoding" in response.headers
+            or request.method == "HEAD"
+        ):
+            return response
+        key = None
+        if request.endpoint == "static":
+            key = (request.path, response.headers.get("ETag"))
+            if key in gzip_cache:
+                response.direct_passthrough = False
+                response.set_data(gzip_cache[key])
+                response.headers["Content-Encoding"] = "gzip"
+                response.vary.add("Accept-Encoding")
+                return response
+        response.direct_passthrough = False
+        data = response.get_data()
+        if len(data) < 500:
+            return response
+        import gzip as _gzip
+
+        packed = _gzip.compress(data, compresslevel=6, mtime=0)
+        if key is not None and len(gzip_cache) < 64:
+            gzip_cache[key] = packed
+        response.set_data(packed)
+        response.headers["Content-Encoding"] = "gzip"
+        response.vary.add("Accept-Encoding")
+        return response
+
+    @app.get("/sw.js")
+    @limiter.exempt
+    def service_worker():
+        """Service worker op de root, zodat de scope de hele app dekt (PWA)."""
+        from flask import send_from_directory
+
+        resp = send_from_directory(app.static_folder, "sw.js", mimetype="text/javascript")
+        resp.headers["Cache-Control"] = "no-cache"
+        resp.headers["Service-Worker-Allowed"] = "/"
+        return resp
+
     @app.context_processor
     def inject_globals():
         nav = [
-            {"endpoint": ep, "label": label, "icon": icon}
-            for ep, label, icon in NAV_ITEMS
+            {"endpoint": ep, "label": label, "icon": icon, "short": short}
+            for ep, label, icon, short in NAV_ITEMS
             if ep in app.view_functions
         ]
         extra: dict[str, Any] = {}

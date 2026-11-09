@@ -25,11 +25,11 @@
 
   <div class="flex min-w-0 flex-1 flex-col">
     {# Header #}
-    <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-      <div class="flex min-w-0 items-center gap-3">
-        <span class="font-semibold md:hidden">{{ app_name }}</span>
+    <header class="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+      <div class="order-last flex w-full min-w-0 items-center gap-3 md:order-none md:w-auto">
+        <span class="hidden font-semibold">{{ app_name }}</span>
         {% if person_options is defined %}
-        <form method="post" action="{{ url_for('settings.person') }}" class="flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-slate-100 p-1 dark:bg-slate-800" role="group" aria-label="Persoonsfilter">
+        <form method="post" action="{{ url_for('settings.person') }}" class="no-scrollbar flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-slate-100 p-1 dark:bg-slate-800" role="group" aria-label="Persoonsfilter">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
           {% for opt in person_options %}
@@ -42,6 +42,7 @@
         {% endif %}
         {% block header_left %}{% endblock %}
       </div>
+      <span class="font-semibold md:hidden">{{ app_name }}</span>
       <div class="flex items-center gap-2">
         {% block header_right %}{% endblock %}
         <div x-data="{ open: false }" class="relative">
@@ -78,9 +79,9 @@
   <nav class="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-slate-800 dark:bg-slate-900 md:hidden"
        style="grid-template-columns: repeat({{ nav_items|length }}, minmax(0, 1fr));" aria-label="Hoofdnavigatie">
     {% for item in nav_items %}
-      <a href="{{ url_for(item.endpoint) }}" class="flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-slate-500 aria-[current=page]:text-brand-700 dark:text-slate-400 dark:aria-[current=page]:text-brand-300"
+      <a href="{{ url_for(item.endpoint) }}" aria-label="{{ item.label }}" class="flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium text-slate-500 aria-[current=page]:text-brand-700 dark:text-slate-400 dark:aria-[current=page]:text-brand-300"
          {% if request.blueprint == item.endpoint.split('.')[0] %}aria-current="page"{% endif %}>
-        {{ icon(item.icon) }}<span class="truncate">{{ item.label }}</span>
+        {{ icon(item.icon) }}<span class="w-full truncate text-center">{{ item.short }}</span>
       </a>
     {% endfor %}
   </nav>

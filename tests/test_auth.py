@@ -98,3 +98,31 @@ def test_session_cookie_flags(tmp_path, monkeypatch):
     assert app.config["SESSION_COOKIE_SECURE"] is True
     assert app.config["SESSION_COOKIE_HTTPONLY"] is True
     assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax"
+
+
+def test_gzip_and_static_caching(app, configured):
+    page = configured.get("/transacties/", headers={"Accept-Encoding": "gzip"})
+    assert (
+        page.headers.get("Content-Encoding") == "gzip" and "Accept-Encoding" in page.headers["Vary"]
+    )
+    import gzip
+
+    assert b"Transacties" in gzip.decompress(page.data)
+    plain = configured.get("/transacties/")
+    assert "Content-Encoding" not in plain.headers and b"Transacties" in plain.data
+    css = configured.get("/static/js/app.js?v=1.0.0", headers={"Accept-Encoding": "gzip"})
+    assert css.headers["Content-Encoding"] == "gzip"
+    assert css.headers["Cache-Control"] == "no-cache"  # 'dev'-versie cachet niet onbeperkt
+    again = configured.get("/static/js/app.js?v=1.0.0", headers={"Accept-Encoding": "gzip"})
+    assert again.data == css.data
+    app.config["APP_VERSION"] = "1.0.0"
+    cached = configured.get("/static/js/app.js?v=1.0.0")
+    assert "immutable" in cached.headers["Cache-Control"]
+    sw = configured.get("/sw.js")
+    assert sw.status_code == 200 and sw.headers["Service-Worker-Allowed"] == "/"
+    assert "javascript" in sw.mimetype
+    assert configured.get("/health", headers={"Accept-Encoding": "gzip"}).status_code == 200
+    assert (
+        configured.get("/gegevens/backup/download", headers={"Accept-Encoding": "gzip"}).mimetype
+        == "application/zip"
+    )

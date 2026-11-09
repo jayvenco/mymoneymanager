@@ -18,17 +18,17 @@
 </div>
 
 {% if page.items %}
-<div class="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+<div class="relative overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
   <table class="w-full text-left">
     <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900/60">
       <tr>
-        <th class="w-10 py-3 pl-3 pr-1"><input type="checkbox" class="h-4 w-4 rounded" @change="toggleAll($event.target.checked)" aria-label="Alles selecteren"></th>
-        <th class="px-2 py-3">{{ sort_link('date', 'Datum') }}</th>
+        <th class="w-8 py-3 pl-2 pr-0 md:w-10 md:pl-3 md:pr-1"><input type="checkbox" class="h-4 w-4 rounded" @change="toggleAll($event.target.checked)" aria-label="Alles selecteren"></th>
+        <th class="hidden px-2 py-3 sm:table-cell">{{ sort_link('date', 'Datum') }}</th>
         <th class="px-2 py-3">{{ sort_link('description', 'Omschrijving') }}</th>
         <th class="hidden px-2 py-3 md:table-cell">{{ sort_link('category', 'Categorie') }}</th>
         <th class="hidden px-2 py-3 lg:table-cell">{{ sort_link('account', 'Rekening') }}</th>
         <th class="px-2 py-3 text-right">{{ sort_link('amount', 'Bedrag') }}</th>
-        <th class="w-36 py-3 pr-3"><span class="sr-only">Acties</span></th>
+        <th class="py-3 pr-2 md:w-36 md:pr-3"><span class="sr-only">Acties</span></th>
       </tr>
     </thead>
     <tbody>

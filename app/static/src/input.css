@@ -32,6 +32,9 @@
   .icon { @apply inline-block h-5 w-5 shrink-0 fill-none stroke-current; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 }
 
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 .skeleton { @apply animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800; }
 .htmx-request .htmx-indicator { opacity: 1; }
 .htmx-indicator { opacity: 0; transition: opacity 150ms; }

@@ -188,3 +188,43 @@ document.addEventListener("keydown", function (event) {
     if (trigger) { event.preventDefault(); trigger.click(); }
   }
 });
+
+// Service worker (PWA) registreren.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function () {});
+  });
+}
+
+// Modals: focus erin plaatsen, binnen houden (Tab) en bij sluiten terugzetten.
+(function () {
+  var trigger = null;
+  document.addEventListener("htmx:beforeRequest", function (event) {
+    var target = event.detail.target;
+    if (target && target.id === "modal-root") trigger = document.activeElement;
+  });
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (!event.target || event.target.id !== "modal-root") return;
+    var dialog = event.target.querySelector("[role=dialog]");
+    if (!dialog) return;
+    var first = dialog.querySelector("[autofocus], input:not([type=hidden]):not([type=radio]), select, textarea, button");
+    if (first) first.focus();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Tab") return;
+    var dialog = document.querySelector("#modal-root [role=dialog]");
+    if (!dialog) return;
+    var items = dialog.querySelectorAll("a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])");
+    var visible = Array.prototype.filter.call(items, function (el) { return el.offsetParent !== null; });
+    if (!visible.length) return;
+    var first = visible[0], last = visible[visible.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  var original = window.mmmCloseModal;
+  window.mmmCloseModal = function () {
+    original();
+    if (trigger && document.contains(trigger)) { try { trigger.focus(); } catch (e) {} }
+    trigger = null;
+  };
+})();

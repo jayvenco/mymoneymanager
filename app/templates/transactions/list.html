@@ -5,15 +5,17 @@
 <div x-data="bulkSelect()" @bulk-done.window="clear()">
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-2xl font-bold tracking-tight">Transacties</h1>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
       <a class="btn-secondary" href="{{ url_for('transactions.export_csv', **query) }}">{{ icon('download') }} CSV</a>
       <a class="btn-secondary" href="{{ url_for('categories.list_view') }}">{{ icon('tags') }} Categorieën</a>
       <button class="btn-primary" hx-get="{{ url_for('transactions.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Transactie</button>
     </div>
   </div>
 
-  {# Filters (staan in de URL en zijn dus te bookmarken) #}
-  <form class="card mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" method="get" action="{{ url_for('transactions.list_view') }}"
+  {# Filters (staan in de URL en zijn dus te bookmarken); op mobiel inklapbaar #}
+  <div x-data="{ open: window.matchMedia('(min-width: 768px)').matches || {{ 'true' if query else 'false' }} }">
+  <button type="button" class="btn-secondary mb-3 w-full md:hidden" @click="open = !open" :aria-expanded="open">{{ icon('filter') }} <span x-text="open ? 'Filters verbergen' : 'Filters tonen'"></span></button>
+  <form :class="open ? 'grid' : 'hidden md:grid'" class="card mb-4 gap-3 sm:grid-cols-2 lg:grid-cols-4" method="get" action="{{ url_for('transactions.list_view') }}"
         hx-get="{{ url_for('transactions.list_view') }}" hx-target="#tx-results" hx-push-url="true"
         hx-trigger="change, keyup changed delay:300ms from:#q, input changed delay:400ms from:.num-filter">
     <div class="sm:col-span-2">
@@ -72,6 +74,7 @@
     </div>
     <input type="hidden" name="sort" value="{{ f.sort }}"><input type="hidden" name="dir" value="{{ f.direction }}">
   </form>
+  </div>
 
   {# Bulkbalk #}
   <form x-cloak x-show="selected.length" x-data="{ action: 'category' }" hx-post="{{ url_for('transactions.bulk') }}" hx-swap="none"

@@ -1,13 +1,13 @@
 {% from "_macros.html" import icon, amount, member_badge %}
 {% set owner = members.get(tx.account.owner_member_id) if tx.account.owner_member_id else None %}
 <tr id="tx-{{ tx.id }}" class="group border-b border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50">
-  <td class="w-10 py-3 pl-3 pr-1">
+  <td class="w-8 py-3 pl-2 pr-0 md:w-10 md:pl-3 md:pr-1">
     <input type="checkbox" data-row-check value="{{ tx.id }}" x-model="selected" class="h-4 w-4 rounded" aria-label="Selecteer transactie {{ tx.description or tx.payee }}">
   </td>
-  <td class="whitespace-nowrap px-2 py-3 text-sm text-slate-500 num cursor-pointer" hx-get="{{ url_for('transactions.inline_form', tx_id=tx.id) }}" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML">{{ tx.date|datum }}</td>
+  <td class="hidden whitespace-nowrap px-2 py-3 text-sm text-slate-500 num cursor-pointer sm:table-cell" hx-get="{{ url_for('transactions.inline_form', tx_id=tx.id) }}" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML">{{ tx.date|datum }}</td>
   <td class="max-w-[16rem] px-2 py-3 cursor-pointer" hx-get="{{ url_for('transactions.inline_form', tx_id=tx.id) }}" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML">
     <p class="truncate font-medium">{{ tx.description or tx.payee or '—' }}</p>
-    <p class="truncate text-xs text-slate-500">
+    <p class="truncate text-xs text-slate-500"><span class="num sm:hidden">{{ tx.date|datum }} </span>
       {% if tx.payee and tx.description %}{{ tx.payee }}{% endif %}
       {% if info.transfer_label %}<span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ info.transfer_label }}{% if tx.to_account %}: {{ tx.account.name }} → {{ tx.to_account.name }}{% endif %}</span>{% endif %}
       {% for t in tx.tags %}<span class="badge" style="background-color: {{ t.color }}22; color: {{ t.color }}">#{{ t.name }}</span>{% endfor %}
@@ -22,11 +22,11 @@
     <span class="mr-1">{{ tx.account.name }}</span>{{ member_badge(owner) }}
   </td>
   <td class="whitespace-nowrap px-2 py-3 text-right">{{ amount(tx.amount_cents, tx.type) }}</td>
-  <td class="w-36 whitespace-nowrap py-2 pl-1 pr-3 text-right">
-    <a class="btn-ghost !min-h-[36px] !px-2" href="{{ url_for('transactions.detail', tx_id=tx.id) }}" aria-label="Details en geschiedenis">{{ icon('file-text') }}</a>
+  <td class="whitespace-nowrap py-2 pl-1 pr-2 text-right md:w-36 md:pr-3">
+    <a class="btn-ghost hidden !min-h-[36px] !px-2 md:inline-flex" href="{{ url_for('transactions.detail', tx_id=tx.id) }}" aria-label="Details en geschiedenis">{{ icon('file-text') }}</a>
     <button class="btn-ghost !min-h-[36px] !px-2" hx-get="{{ url_for('transactions.edit_form', tx_id=tx.id) }}" hx-target="#modal-root" aria-label="Bewerken">{{ icon('pencil') }}</button>
-    <button class="btn-ghost !min-h-[36px] !px-2" hx-post="{{ url_for('transactions.duplicate', tx_id=tx.id) }}" hx-swap="none" aria-label="Dupliceren">{{ icon('copy') }}</button>
-    <button class="btn-ghost !min-h-[36px] !px-2 text-red-600" hx-post="{{ url_for('transactions.delete', tx_id=tx.id) }}" hx-swap="none"
+    <button class="btn-ghost hidden !min-h-[36px] !px-2 md:inline-flex" hx-post="{{ url_for('transactions.duplicate', tx_id=tx.id) }}" hx-swap="none" aria-label="Dupliceren">{{ icon('copy') }}</button>
+    <button class="btn-ghost hidden !min-h-[36px] !px-2 text-red-600 md:inline-flex" hx-post="{{ url_for('transactions.delete', tx_id=tx.id) }}" hx-swap="none"
             hx-confirm="Weet je zeker dat je deze transactie wilt verwijderen?" aria-label="Verwijderen">{{ icon('trash-2') }}</button>
   </td>
 </tr>
