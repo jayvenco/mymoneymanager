@@ -280,6 +280,8 @@ class RecurringRule(db.Model):
     tag_ids_json: Mapped[str] = mapped_column(db.Text, default="[]")
     frequency: Mapped[str] = mapped_column(db.String(10), default="monthly")
     interval: Mapped[int] = mapped_column(default=1)
+    # Dag van de maand waarop de regel oorspronkelijk viel (voorkomt drift bij 29-31).
+    anchor_day: Mapped[int | None] = mapped_column(nullable=True)
     next_date: Mapped[Date] = mapped_column()
     end_date: Mapped[Date | None] = mapped_column(nullable=True)
     auto_create: Mapped[bool] = mapped_column(default=False)

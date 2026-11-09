@@ -1,0 +1,21 @@
+{% from "_macros.html" import icon, amount %}
+{# Lijst met te bevestigen termijnen; wordt hier en op het Overzicht gebruikt #}
+{% if pending %}
+<ul class="divide-y divide-slate-100 dark:divide-slate-800">
+  {% for p in pending %}
+  <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+    <div class="min-w-0">
+      <p class="truncate font-medium">{{ p.rule.name }}</p>
+      <p class="text-xs text-slate-500">{{ p.due|datum }} · {{ p.rule.account.name }}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span>{{ amount(p.rule.amount_cents, p.rule.type) }}</span>
+      <button class="btn-primary !min-h-[36px] !px-3" hx-post="{{ url_for('recurring.confirm', rule_id=p.rule.id) }}" hx-swap="none" aria-label="Bevestigen: {{ p.rule.name }}">{{ icon('check') }} Bevestig</button>
+      <button class="btn-ghost !min-h-[36px] !px-2" hx-post="{{ url_for('recurring.skip', rule_id=p.rule.id) }}" hx-swap="none" aria-label="Overslaan: {{ p.rule.name }}">Overslaan</button>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="py-4 text-center text-sm text-slate-500">Niets te bevestigen. 🎉</p>
+{% endif %}

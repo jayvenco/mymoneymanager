@@ -106,6 +106,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 
     register_cli(app)
 
+    if app.config["SCHEDULER_ENABLED"] and not app.config["TESTING"]:
+        from .services.scheduler import start_scheduler
+
+        start_scheduler(app)
+
     app.jinja_env.filters["eur"] = format_eur
     app.jinja_env.filters["datum"] = format_date
     app.jinja_env.filters["maand"] = month_label
@@ -116,7 +121,10 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 def _register_blueprints(app: Flask) -> None:
     from .blueprints.accounts import bp as accounts_bp
     from .blueprints.auth import bp as auth_bp
+    from .blueprints.budgets import bp as budgets_bp
     from .blueprints.categories import bp as categories_bp
+    from .blueprints.goals import bp as goals_bp
+    from .blueprints.recurring import bp as recurring_bp
     from .blueprints.reports import bp as reports_bp
     from .blueprints.settings import bp as settings_bp
     from .blueprints.setup import bp as setup_bp
@@ -129,6 +137,9 @@ def _register_blueprints(app: Flask) -> None:
         transactions_bp,
         accounts_bp,
         categories_bp,
+        budgets_bp,
+        recurring_bp,
+        goals_bp,
         settings_bp,
     ):
         app.register_blueprint(blueprint)

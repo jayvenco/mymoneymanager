@@ -63,7 +63,7 @@ def load_config(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         "BUILD_DATE": env.get("BUILD_DATE", "unknown"),
         "RATELIMIT_STORAGE_URI": "memory://",
         "RATELIMIT_HEADERS_ENABLED": True,
-        "SCHEDULER_ENABLED": _bool(env.get("SCHEDULER_ENABLED"), True),
+        "SCHEDULER_ENABLED": _bool(env.get("SCHEDULER_ENABLED"), False),
         "MAX_CONTENT_LENGTH": 256 * 1024 * 1024,
     }
     config.update({k: v for k, v in overrides.items() if k not in {"DATA_DIR", "BACKUP_DIR"}})

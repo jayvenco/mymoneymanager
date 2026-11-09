@@ -1,0 +1,57 @@
+{% extends "layout_app.html" %}
+{% from "_macros.html" import icon, amount, member_badge %}
+{% block title %}Vaste lasten · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-bold tracking-tight">Vaste lasten</h1>
+  <button class="btn-primary" hx-get="{{ url_for('recurring.new_form') }}" hx-target="#modal-root">{{ icon('plus') }} Vaste last</button>
+</div>
+
+<section class="card mb-6" aria-labelledby="h-pending">
+  <h2 id="h-pending" class="mb-1 font-semibold">Te bevestigen</h2>
+  {% include "recurring/_pending.html" %}
+</section>
+
+<section class="card mb-6" aria-labelledby="h-upcoming">
+  <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="h-upcoming" class="font-semibold">Komende 30 dagen</h2>
+    <p class="num text-sm text-slate-500">
+      {% for name, cents in per_member.items() %}{{ name }}: <strong class="text-slate-900 dark:text-slate-100">{{ cents|eur }}</strong> · {% endfor %}
+      Totaal: <strong class="text-slate-900 dark:text-slate-100">{{ total|eur }}</strong>
+    </p>
+  </div>
+  <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for u in upcoming %}
+    <li class="flex items-center justify-between gap-3 py-2 text-sm">
+      <span class="num w-24 shrink-0 text-slate-500">{{ u.due|datum }}</span>
+      <span class="min-w-0 flex-1 truncate">{{ u.rule.name }}</span>
+      {{ amount(u.rule.amount_cents, u.rule.type) }}
+    </li>
+    {% else %}<li class="py-4 text-center text-slate-500">Geen verwachte termijnen.</li>{% endfor %}
+  </ul>
+</section>
+
+<section aria-labelledby="h-rules">
+  <h2 id="h-rules" class="mb-2 font-semibold">Alle vaste lasten</h2>
+  <div class="card !p-0">
+    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in rules %}
+      <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 {{ 'opacity-60' if not r.is_active }}">
+        <div class="min-w-0">
+          <p class="truncate font-medium">{{ r.name }} {{ member_badge(members.get(r.account.owner_member_id)) }}</p>
+          <p class="text-xs text-slate-500">{{ freq[r.frequency] }}{% if r.interval > 1 %} (elke {{ r.interval }}){% endif %} · volgende: {{ r.next_date|datum }}{% if r.end_date %} · t/m {{ r.end_date|datum }}{% endif %}{% if r.auto_create %} · automatisch{% endif %}{% if not r.is_active %} · gepauzeerd{% endif %}</p>
+        </div>
+        <div class="flex items-center gap-1">
+          {{ amount(r.amount_cents, r.type) }}
+          <button class="btn-ghost !min-h-[34px] !px-2" hx-get="{{ url_for('recurring.edit_form', rule_id=r.id) }}" hx-target="#modal-root" aria-label="Bewerken">{{ icon('pencil') }}</button>
+          <button class="btn-ghost !min-h-[34px] !px-2" hx-post="{{ url_for('recurring.toggle', rule_id=r.id) }}" hx-swap="none" aria-label="{{ 'Hervatten' if not r.is_active else 'Pauzeren' }}">{{ icon('refresh-cw') }}</button>
+          <button class="btn-ghost !min-h-[34px] !px-2 text-red-600" hx-post="{{ url_for('recurring.delete', rule_id=r.id) }}" hx-swap="none" hx-confirm="Deze vaste last verwijderen? Eerder aangemaakte transacties blijven bestaan." aria-label="Verwijderen">{{ icon('trash-2') }}</button>
+        </div>
+      </li>
+      {% else %}
+      <li class="px-4 py-10 text-center text-slate-500">Nog geen vaste lasten. Voeg bijvoorbeeld huur, salaris of abonnementen toe.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}
