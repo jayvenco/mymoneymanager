@@ -129,3 +129,12 @@ def test_scheduler_lock_is_single_instance(tmp_path):
     assert {job.id for job in scheduler.get_jobs()} >= {"recurring"}
     assert start_scheduler(app) is None
     scheduler.shutdown(wait=False)
+
+
+def test_scheduled_job_is_safe_on_empty_database(tmp_path, caplog):
+    from app.services.scheduler import run_recurring
+
+    app = make_app(tmp_path)
+    with caplog.at_level("ERROR"):
+        run_recurring(app)  # geen huishouden: mag niet crashen of loggen als fout
+    assert not [r for r in caplog.records if r.levelname == "ERROR"]

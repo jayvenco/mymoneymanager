@@ -23,9 +23,12 @@ def acquire_lock(app: Flask):
 
 
 def run_recurring(app: Flask) -> None:
+    from .household import get_household
     from .recurring import generate_due
 
     with app.app_context():
+        if get_household() is None:
+            return  # nog niet ingesteld: er valt niets te genereren
         try:
             created = generate_due(date.today())
             if created:
