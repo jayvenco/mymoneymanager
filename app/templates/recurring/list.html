@@ -12,6 +12,12 @@
   {% include "recurring/_pending.html" %}
 </section>
 
+<section class="card mb-6" aria-labelledby="h-review">
+  <h2 id="h-review" class="mb-1 font-semibold">Terugkerende uitgaven om te herzien</h2>
+  <p class="mb-1 text-xs text-slate-500">Vink bij een nieuwe uitgave “Terugkerende uitgave” aan en kies 6 of 12 maanden. Hier zie je wanneer ze aan de beurt zijn.</p>
+  {% set items = review_items %}{% include "transactions/_reviews.html" %}
+</section>
+
 <section class="card mb-6" aria-labelledby="h-upcoming">
   <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
     <h2 id="h-upcoming" class="font-semibold">Komende 30 dagen</h2>

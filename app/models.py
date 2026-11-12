@@ -215,6 +215,9 @@ class Transaction(db.Model):
     notes: Mapped[str] = mapped_column(db.Text, default="")
     # Herkomst (CSV-import / terugkerende regel); gebruikt voor duplicaatdetectie.
     external_ref: Mapped[str | None] = mapped_column(db.String(64), nullable=True)
+    # Terugkerende uitgave die elke 6 of 12 maanden herzien moet worden (None = niet van toepassing).
+    review_months: Mapped[int | None] = mapped_column(nullable=True)
+    review_checked_on: Mapped[Date | None] = mapped_column(nullable=True)
     recurring_rule_id: Mapped[int | None] = mapped_column(
         ForeignKey("recurring_rule.id", ondelete="SET NULL"), nullable=True
     )
@@ -230,6 +233,10 @@ class Transaction(db.Model):
 
     __table_args__ = (
         CheckConstraint("amount_cents > 0", name="ck_tx_amount_positive"),
+        CheckConstraint(
+            "review_months IS NULL OR (review_months IN (6, 12) AND type = 'expense')",
+            name="ck_tx_review_months",
+        ),
         CheckConstraint("type IN ('income','expense','transfer')", name="ck_tx_type"),
         CheckConstraint(
             "(type = 'transfer' AND to_account_id IS NOT NULL AND to_account_id != account_id)"

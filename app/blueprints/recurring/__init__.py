@@ -70,6 +70,7 @@ def list_view():
         per_member=per_member,
         total=total,
         pending=svc.pending_confirmations(),
+        review_items=tx_svc.reviews(),
         members=members,
         freq=FREQ_LABELS,
         today=date.today(),

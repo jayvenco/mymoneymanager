@@ -12,6 +12,7 @@ from . import budgets as budget_svc
 from . import goals as goal_svc
 from . import recurring as recurring_svc
 from . import report_core as core
+from . import transactions as tx_svc
 from .household import get_household, household_id, members, members_by_id
 from .people import HOUSEHOLD, JOINT, PersonFilter, person_transaction_clause
 from .report_model import Cell, D, M, N, P, Report, Section, T, series
@@ -229,6 +230,7 @@ def build_overview(params: core.ReportParams, user=None) -> Report:
     report.extras["budget_warnings"] = sum(1 for line in lines if line.state != "ok")
     report.extras["goals"] = goal_svc.progress_for(params.person, user, today)[:4]
     report.extras["pending"] = recurring_svc.pending_confirmations(today, user)
+    report.extras["reviews"] = tx_svc.reviews(user, today, within_days=45)
     report.extras["upcoming"] = recurring_svc.upcoming(30, today, user)[:8]
     last = access.visible_transactions(user).where(Transaction.household_id == household_id())
     clause = person_transaction_clause(params.person)

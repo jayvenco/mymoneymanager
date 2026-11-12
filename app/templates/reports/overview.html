@@ -92,6 +92,11 @@
     {% set pending = report.extras.pending %}{% include "recurring/_pending.html" %}
   </section>
 
+  <section class="card lg:col-span-2" aria-labelledby="w-review">
+    <div class="mb-1 flex items-center justify-between"><h2 id="w-review" class="font-semibold">Te herzien</h2><a class="text-sm text-brand-700 hover:underline dark:text-brand-300" href="{{ url_for('recurring.list_view') }}">Alle terugkerende uitgaven</a></div>
+    {% set items = report.extras.reviews %}{% include "transactions/_reviews.html" %}
+  </section>
+
   <section class="card" aria-labelledby="w-upcoming">
     <h2 id="w-upcoming" class="mb-2 font-semibold">Komende 30 dagen</h2>
     <ul class="divide-y divide-slate-100 text-sm dark:divide-slate-800">

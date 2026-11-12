@@ -17,6 +17,7 @@ from .household import household_id
 from .people import PersonFilter, person_transaction_clause
 
 PAGE_SIZE = 50
+REVIEW_CHOICES = (6, 12)
 
 
 class TransactionError(Exception):
@@ -40,6 +41,8 @@ def serialize(tx: Transaction) -> dict[str, Any]:
         "payee": tx.payee,
         "notes": tx.notes,
         "tags": sorted(t.name for t in tx.tags),
+        "review_months": tx.review_months,
+        "review_checked_on": tx.review_checked_on.isoformat() if tx.review_checked_on else None,
     }
 
 
@@ -187,6 +190,15 @@ def clean_form(form, user, existing: Transaction | None = None) -> dict[str, Any
     data.update(description=description, payee=payee, notes=(form.get("notes") or "").strip())
     data["tag_names"] = parse_tag_names(form.get("tags"))
 
+    # Terugkerende uitgave: vinkje + herzien na 6 of 12 maanden (alleen bij uitgaven).
+    data["review_months"] = None
+    if form.get("recurring_review") in {"1", "on", "true"} and tx_type == "expense":
+        months = _int(form.get("review_months"))
+        if months not in REVIEW_CHOICES:
+            errors["review_months"] = "Kies herzien na 6 of 12 maanden."
+        else:
+            data["review_months"] = months
+
     if errors:
         raise TransactionError(errors)
     return data
@@ -209,6 +221,10 @@ def _apply(tx: Transaction, data: dict[str, Any]) -> None:
     ):
         setattr(tx, key, data[key])
     tx.tags = find_or_create_tags(data["tag_names"])
+    months = data.get("review_months")
+    if months != tx.review_months:
+        tx.review_checked_on = None  # nieuwe termijn: telt weer vanaf de transactiedatum
+    tx.review_months = months
 
 
 def create_transaction(data: dict[str, Any], user) -> Transaction:
@@ -283,6 +299,7 @@ def restore_deleted(audit_id: int, user) -> Transaction | None:
         "payee": before["payee"],
         "notes": before["notes"],
         "tag_names": before["tags"],
+        "review_months": before.get("review_months"),
     }
     _apply(tx, data)
     db.session.add(tx)
@@ -297,6 +314,61 @@ def duplicate_transaction(tx: Transaction, user) -> Transaction:
     data["date"] = date.today()
     data["tag_names"] = data.pop("tags")
     return create_transaction(data, user)
+
+
+# --- herzien van terugkerende uitgaven ---
+
+
+@dataclass
+class ReviewItem:
+    tx: Transaction
+    due: date
+
+    @property
+    def overdue(self) -> bool:
+        return self.due < date.today()
+
+
+def review_due_date(tx: Transaction) -> date:
+    from .periods import add_months_clamped
+
+    return add_months_clamped(tx.review_checked_on or tx.date, tx.review_months or 12)
+
+
+def reviews(
+    user=None, today: date | None = None, within_days: int | None = None
+) -> list[ReviewItem]:
+    """Terugkerende uitgaven met een herzieningsdatum, oudste eerst. `within_days`: alleen binnenkort/te laat."""
+    from datetime import timedelta
+
+    today = today or date.today()
+    stmt = access.visible_transactions(user).where(
+        Transaction.household_id == household_id(), Transaction.review_months.isnot(None)
+    )
+    items = [ReviewItem(t, review_due_date(t)) for t in db.session.execute(stmt).scalars()]
+    if within_days is not None:
+        horizon = today + timedelta(days=within_days)
+        items = [i for i in items if i.due <= horizon]
+    return sorted(items, key=lambda i: (i.due, i.tx.id))
+
+
+def mark_reviewed(tx: Transaction, user, today: date | None = None) -> None:
+    before = serialize(tx)
+    tx.review_checked_on = today or date.today()
+    tx.updated_by_user_id = getattr(user, "id", None)
+    db.session.flush()
+    write_audit("transaction", tx.id, "update", before, serialize(tx), user)
+    db.session.commit()
+
+
+def stop_review(tx: Transaction, user) -> None:
+    before = serialize(tx)
+    tx.review_months = None
+    tx.review_checked_on = None
+    tx.updated_by_user_id = getattr(user, "id", None)
+    db.session.flush()
+    write_audit("transaction", tx.id, "update", before, serialize(tx), user)
+    db.session.commit()
 
 
 # --- bulk

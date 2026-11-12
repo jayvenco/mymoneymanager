@@ -100,6 +100,8 @@ def form_context(tx: Transaction | None = None, form=None, errors=None) -> dict:
             "payee": tx.payee,
             "notes": tx.notes,
             "tags": ", ".join(t.name for t in tx.tags),
+            "recurring_review": "1" if tx.review_months else "",
+            "review_months": str(tx.review_months or 12),
         }
     else:
         values = {
@@ -263,6 +265,8 @@ def inline_save(tx_id: int):
         "amount": format_number(tx.amount_cents),
         "date": format_date(tx.date),
         "description": tx.description,
+        "recurring_review": "1" if tx.review_months else "",
+        "review_months": str(tx.review_months or ""),
     }
     merged.update(
         {
@@ -387,6 +391,25 @@ def detail(tx_id: int):
         ]
         entries.append({"entry": entry, "changes": changes})
     return render_template("transactions/detail.html", **row_context(tx), history=entries)
+
+
+@bp.post("/<int:tx_id>/herzien")
+@login_required
+def mark_reviewed(tx_id: int):
+    tx = get_tx_or_404(tx_id)
+    if not tx.review_months:
+        abort(400)
+    svc.mark_reviewed(tx, current_user)
+    return _hx_response(
+        f"'{tx.description or tx.payee}' is herzien; volgende controle over {tx.review_months} maanden."
+    )
+
+
+@bp.post("/<int:tx_id>/herziening-stoppen")
+@login_required
+def stop_review(tx_id: int):
+    svc.stop_review(get_tx_or_404(tx_id), current_user)
+    return _hx_response("Herziening gestopt voor deze uitgave.")
 
 
 @bp.get("/export.csv")

@@ -2,7 +2,7 @@
 {{ modal_open('Transactie bewerken' if tx else 'Nieuwe transactie') }}
 <form hx-post="{{ url_for('transactions.update', tx_id=tx.id) if tx else url_for('transactions.create') }}"
       hx-target="#modal-root" hx-swap="innerHTML" class="space-y-4" novalidate
-      x-data="{ type: '{{ values.type or 'expense' }}' }">
+      x-data="{ type: '{{ values.type or 'expense' }}', review: {{ 'true' if values.recurring_review else 'false' }} }">
 
   {# Type #}
   <fieldset>
@@ -111,6 +111,22 @@
       <template x-for="s in suggestions" :key="s"><button type="button" class="badge bg-slate-100 hover:bg-slate-200 dark:bg-slate-800" @click="add(s)" x-text="s"></button></template>
       <button type="button" x-show="text.trim()" class="badge bg-brand-50 text-brand-800 hover:bg-brand-100" @click="add()">+ “<span x-text="text.trim()"></span>” aanmaken</button>
     </div>
+  </div>
+
+  {# Terugkerende uitgave die periodiek herzien moet worden #}
+  <div x-show="type === 'expense'" {% if values.type != 'expense' %}x-cloak{% endif %} class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+    <label class="flex items-start gap-2 text-sm">
+      <input type="checkbox" name="recurring_review" value="1" class="mt-0.5 h-4 w-4 rounded" x-model="review" :disabled="type !== 'expense'" {{ 'checked' if values.recurring_review }}>
+      <span><strong>Terugkerende uitgave</strong> — herinner me om deze periodiek te herzien (abonnement, verzekering, contract).</span>
+    </label>
+    <div x-show="review" x-cloak class="mt-3 flex flex-wrap items-center gap-3">
+      <label class="label !mb-0" for="f-review">Herzien na</label>
+      <select class="input !w-auto" id="f-review" name="review_months" :disabled="type !== 'expense' || !review">
+        <option value="6" {{ 'selected' if values.review_months|string == '6' }}>6 maanden</option>
+        <option value="12" {{ 'selected' if values.review_months|string in ('12', 'None', '') }}>12 maanden</option>
+      </select>
+    </div>
+    {{ field_error(errors, 'review_months') }}
   </div>
 
   <div>

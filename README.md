@@ -21,6 +21,7 @@ Zelf gehost huishoudboekje voor **twee partners**: inkomsten, uitgaven, budgette
 - **Transacties**: snel invoeren (knop `+` of toets `N`), inline bewerken, bulkacties, dupliceren, verwijderen met 10 seconden *Ongedaan maken*, filters in de URL, volledige wijzigingsgeschiedenis (audit-log).
 - **Rekeningen** met saldo, sparkline en *Saldo controleren* (correctietransactie, standaard buiten rapportages).
 - **Budgetten** per categorie en maand (standaard + overrides), optioneel per persoon, rollover en groen/oranje/rood-status.
+- **Terugkerende uitgaven herzien**: vink bij een nieuwe uitgave *Terugkerende uitgave* aan en kies **6 of 12 maanden**; onder *Te herzien* (Rapportages en Vaste lasten) zie je wanneer ze aan de beurt zijn, met *Herzien* / stop-herinnering.
 - **Vaste lasten**: automatisch aanmaken of onder *Te bevestigen* in Rapportages; overzicht van de komende 30 dagen.
 - **Spaardoelen** met voortgang, benodigde maandinleg en *op schema / achter*.
 - **Rapportages** (11 stuks): Overzicht, Cashflow, Categorieën, **Per persoon** (verschillen tussen de partners in € en %, aandelen, bijdragen aan gezamenlijke rekeningen), Trends, Tags, Budget vs werkelijk, Jaaroverzicht, Vermogen & sparen, Toplijsten en Losse grote uitgaven. Perioden volgen de **financiële maand** (bijv. startdag 25), met vergelijking met de vorige periode of vorig jaar. Elk rapport is te exporteren als **CSV, XLSX en PDF** en heeft een deelbare URL.

@@ -1,0 +1,24 @@
+{% from "_macros.html" import icon, amount %}
+{# Te herziene terugkerende uitgaven; items = lijst van ReviewItem #}
+{% if items %}
+<ul class="divide-y divide-slate-100 dark:divide-slate-800">
+  {% for r in items %}
+  <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+    <div class="min-w-0">
+      <a class="block truncate font-medium hover:underline" href="{{ url_for('transactions.detail', tx_id=r.tx.id) }}">{{ r.tx.description or r.tx.payee or '—' }}</a>
+      <p class="text-xs {{ 'text-red-600 dark:text-red-400' if r.overdue else 'text-slate-500' }}">
+        {% if r.overdue %}{{ icon('alert-triangle', '!h-3 !w-3') }} Te herzien sinds {{ r.due|datum }}{% else %}Herzien vóór {{ r.due|datum }}{% endif %}
+        · elke {{ r.tx.review_months }} maanden · {{ r.tx.account.name }}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      {{ amount(r.tx.amount_cents, r.tx.type) }}
+      <button class="btn-primary !min-h-[36px] !px-3" hx-post="{{ url_for('transactions.mark_reviewed', tx_id=r.tx.id) }}" hx-swap="none" aria-label="Markeer als herzien: {{ r.tx.description or r.tx.payee }}">{{ icon('check') }} Herzien</button>
+      <button class="btn-ghost !min-h-[36px] !px-2" hx-get="{{ url_for('transactions.edit_form', tx_id=r.tx.id) }}" hx-target="#modal-root" aria-label="Bewerken">{{ icon('pencil') }}</button>
+      <button class="btn-ghost !min-h-[36px] !px-2 text-slate-500" hx-post="{{ url_for('transactions.stop_review', tx_id=r.tx.id) }}" hx-swap="none" hx-confirm="Niet meer herinneren aan deze uitgave?" aria-label="Stop herinnering" title="Stop herinnering">{{ icon('x') }}</button>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="py-4 text-center text-sm text-slate-500">Geen uitgaven die binnenkort herzien moeten worden.</p>
+{% endif %}

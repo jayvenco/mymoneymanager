@@ -2,6 +2,12 @@
 
 Alle noemenswaardige wijzigingen staan hier. Formaat: [Keep a Changelog](https://keepachangelog.com/nl/1.1.0/).
 
+## [Unreleased]
+
+### Toegevoegd
+- Vinkje *Terugkerende uitgave* met herziening na 6 of 12 maanden, overzicht *Te herzien* en acties (herzien / stop).
+- Automatische back-up standaard maandelijks met 360 dagen bewaartermijn (instelbaar); poort 8708; nieuw logo.
+
 ## [1.0.0] — 2026-11-09
 
 Eerste release.
