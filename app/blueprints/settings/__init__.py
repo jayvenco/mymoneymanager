@@ -25,6 +25,7 @@ from ...services import access
 from ...services.household import get_household
 from ...services.people import person_options, remember_person
 from ...services.setup import validate_password
+from ...themes import THEME_KEYS
 
 bp = Blueprint("settings", __name__)
 
@@ -40,7 +41,7 @@ def index():
 @login_required
 def theme():
     value = request.form.get("theme")
-    if value not in {"light", "dark", "system"}:
+    if value not in THEME_KEYS:
         abort(400)
     current_user.theme_preference = value
     db.session.commit()
@@ -69,7 +70,7 @@ def profile():
     accounts = list(db.session.execute(access.visible_accounts(include_archived=False)).scalars())
     if request.method == "POST":
         theme_value = request.form.get("theme")
-        if theme_value in {"light", "dark", "system"}:
+        if theme_value in THEME_KEYS:
             current_user.theme_preference = theme_value
         options = {o["key"] for o in person_options()}
         chosen = request.form.get("person")

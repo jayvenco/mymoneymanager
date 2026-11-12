@@ -8,8 +8,24 @@
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <p class="text-sm text-slate-500">Ingelogd als <strong class="text-slate-900 dark:text-slate-100">{{ current_user.username }}</strong>{% if current_user.is_admin %} (beheerder){% endif %}</p>
   <fieldset><legend class="label">Thema</legend>
-    <div class="flex gap-4">{% for v, l in [('light','Licht'),('dark','Donker'),('system','Systeem')] %}
-      <label class="flex items-center gap-2 text-sm"><input type="radio" name="theme" value="{{ v }}" class="h-4 w-4" {{ 'checked' if current_user.theme_preference == v }} onchange="mmmSetTheme('{{ v }}')"> {{ l }}</label>{% endfor %}</div>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {% for t in themes %}
+      <label class="cursor-pointer">
+        <input type="radio" name="theme" value="{{ t.key }}" class="peer sr-only" {{ 'checked' if current_user.theme_preference == t.key }} onchange="mmmSetTheme('{{ t.key }}')">
+        <span class="block overflow-hidden rounded-xl border border-slate-300 peer-checked:ring-2 peer-checked:ring-brand-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 dark:border-slate-600">
+          <span class="flex h-16 items-end gap-1.5 p-2" style="background: {{ t.page }}">
+            <span class="h-8 flex-1 rounded-md" style="background: {{ t.card }}; border: 1px solid {{ t.accent }}33"></span>
+            <span class="h-3 w-8 rounded-full" style="background: {{ t.accent }}"></span>
+          </span>
+          <span class="block bg-white px-3 py-1.5 text-sm font-medium dark:bg-slate-900">{{ t.label }}{% if t.kind == 'dark' %} <span class="text-xs font-normal text-slate-500">(donker)</span>{% endif %}</span>
+        </span>
+      </label>
+      {% endfor %}
+      <label class="cursor-pointer">
+        <input type="radio" name="theme" value="system" class="peer sr-only" {{ 'checked' if current_user.theme_preference == 'system' }} onchange="mmmSetTheme('system')">
+        <span class="flex h-full min-h-[5.5rem] flex-col items-center justify-center rounded-xl border border-slate-300 px-3 text-sm font-medium peer-checked:ring-2 peer-checked:ring-brand-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 dark:border-slate-600">{{ icon('monitor') }}Systeem<span class="text-xs font-normal text-slate-500">wit of donker</span></span>
+      </label>
+    </div>
   </fieldset>
   <div><label class="label" for="p-person">Standaard persoonsfilter</label>
     <select class="input" id="p-person" name="person">{% for o in person_opts %}<option value="{{ o.key }}" {{ 'selected' if current_user.default_person_filter == o.key }}>{{ o.label }}</option>{% endfor %}</select></div>

@@ -7,19 +7,15 @@ module.exports = {
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
+      // Kleuren komen uit CSS-variabelen (input.css), zodat thema's alleen waarden vervangen.
       colors: {
-        brand: {
-          50: "#f0fdfa",
-          100: "#ccfbf1",
-          200: "#99f6e4",
-          300: "#5eead4",
-          400: "#2dd4bf",
-          500: "#14b8a6",
-          600: "#0d9488",
-          700: "#0f766e",
-          800: "#115e59",
-          900: "#134e4a",
-        },
+        white: "rgb(var(--c-white) / <alpha-value>)",
+        slate: Object.fromEntries(
+          [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((n) => [n, `rgb(var(--c-slate-${n}) / <alpha-value>)`])
+        ),
+        brand: Object.fromEntries(
+          [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((n) => [n, `rgb(var(--c-brand-${n}) / <alpha-value>)`])
+        ),
       },
       boxShadow: {
         card: "0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05)",

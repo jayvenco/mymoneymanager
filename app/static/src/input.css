@@ -3,8 +3,98 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+      --c-white: 255 255 255;
+      --page: 248 250 252;
+      --c-slate-50: 248 250 252;
+      --c-slate-100: 241 245 249;
+      --c-slate-200: 226 232 240;
+      --c-slate-300: 203 213 225;
+      --c-slate-400: 148 163 184;
+      --c-slate-500: 100 116 139;
+      --c-slate-600: 71 85 105;
+      --c-slate-700: 51 65 85;
+      --c-slate-800: 30 41 59;
+      --c-slate-900: 15 23 42;
+      --c-slate-950: 2 6 23;
+      --c-brand-50: 240 253 250;
+      --c-brand-100: 204 251 241;
+      --c-brand-200: 153 246 228;
+      --c-brand-300: 94 234 212;
+      --c-brand-400: 45 212 191;
+      --c-brand-500: 20 184 166;
+      --c-brand-600: 13 148 136;
+      --c-brand-700: 15 118 110;
+      --c-brand-800: 17 94 89;
+      --c-brand-900: 19 78 74;
+  }
+  html[data-theme="light"] { --page: 255 255 255; --c-slate-50: 249 250 251; }
+  html[data-theme="ocean"] {
+      --page: 241 247 253;
+      --c-brand-50: 239 246 255;
+      --c-brand-100: 219 234 254;
+      --c-brand-200: 191 219 254;
+      --c-brand-300: 147 197 253;
+      --c-brand-400: 96 165 250;
+      --c-brand-500: 59 130 246;
+      --c-brand-600: 37 99 235;
+      --c-brand-700: 29 78 216;
+      --c-brand-800: 30 64 175;
+      --c-brand-900: 30 58 138;
+  }
+  html[data-theme="warm"] {
+      --page: 251 247 241;
+      --c-white: 255 254 252;
+      --c-slate-50: 250 250 249;
+      --c-slate-100: 245 245 244;
+      --c-slate-200: 231 229 228;
+      --c-slate-300: 214 211 209;
+      --c-slate-400: 168 162 158;
+      --c-slate-500: 120 113 108;
+      --c-slate-600: 87 83 78;
+      --c-slate-700: 68 64 60;
+      --c-slate-800: 41 37 36;
+      --c-slate-900: 28 25 23;
+      --c-slate-950: 12 10 9;
+      --c-brand-50: 255 247 237;
+      --c-brand-100: 255 237 213;
+      --c-brand-200: 254 215 170;
+      --c-brand-300: 253 186 116;
+      --c-brand-400: 251 146 60;
+      --c-brand-500: 249 115 22;
+      --c-brand-600: 234 88 12;
+      --c-brand-700: 194 65 12;
+      --c-brand-800: 154 52 18;
+      --c-brand-900: 124 45 18;
+  }
+  html[data-theme="midnight"] {
+      --page: 9 10 28;
+      --c-slate-50: 245 246 255;
+      --c-slate-100: 232 234 252;
+      --c-slate-200: 205 210 240;
+      --c-slate-300: 163 171 217;
+      --c-slate-400: 123 132 186;
+      --c-slate-500: 94 103 160;
+      --c-slate-600: 72 80 133;
+      --c-slate-700: 50 56 99;
+      --c-slate-800: 31 35 72;
+      --c-slate-900: 17 19 45;
+      --c-slate-950: 9 10 28;
+      --c-brand-50: 245 243 255;
+      --c-brand-100: 237 233 254;
+      --c-brand-200: 221 214 254;
+      --c-brand-300: 196 181 253;
+      --c-brand-400: 167 139 250;
+      --c-brand-500: 139 92 246;
+      --c-brand-600: 124 58 237;
+      --c-brand-700: 109 40 217;
+      --c-brand-800: 91 33 182;
+      --c-brand-900: 76 29 149;
+  }
+
   html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100; }
+  body { @apply text-slate-900 antialiased dark:text-slate-100; background-color: rgb(var(--page)); }
+  html.dark body { background-color: rgb(var(--c-slate-950)); }
   :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950; }
   [x-cloak] { display: none !important; }
 }

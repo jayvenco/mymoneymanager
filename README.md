@@ -27,7 +27,7 @@ Zelf gehost huishoudboekje voor **twee partners**: inkomsten, uitgaven, budgette
 - **Rapportages** (11 stuks): Overzicht, Cashflow, Categorieën, **Per persoon** (verschillen tussen de partners in € en %, aandelen, bijdragen aan gezamenlijke rekeningen), Trends, Tags, Budget vs werkelijk, Jaaroverzicht, Vermogen & sparen, Toplijsten en Losse grote uitgaven. Perioden volgen de **financiële maand** (bijv. startdag 25), met vergelijking met de vorige periode of vorig jaar. Elk rapport is te exporteren als **CSV, XLSX en PDF** en heeft een deelbare URL.
 - **Back-up en restore** (SQLite online backup API, veilig tijdens gebruik), automatische dagelijkse back-ups met retentie, volledige export (JSON/CSV) en **CSV-import** met presets voor ING, Rabobank en ABN AMRO en duplicaatdetectie.
 - **Beveiliging**: Argon2-wachtwoorden, CSRF op elk formulier en HTMX-verzoek, inlog-rate-limit (5 per minuut), optionele TOTP-2FA, veilige cookies, de app draait nooit als root.
-- **Mooi en snel**: licht/donker, responsive vanaf 360 px, bottom-navigatie op mobiel, installeerbaar als PWA, gzip en cache-headers.
+- **Mooi en snel**: **5 thema's** (Wit, Donker, Oceaan, Warm, Middernacht, plus Systeem), responsive vanaf 360 px, bottom-navigatie op mobiel, installeerbaar als PWA, gzip en cache-headers.
 
 Bewust **niet** inbegrepen: bankkoppelingen, OCR/bonnetjes, AI-functies en verrekenen tussen partners ("wie is wie geld schuldig"). Verschillen zie je alleen in de rapportages.
 

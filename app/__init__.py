@@ -15,6 +15,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import APP_NAME, load_config
 from .extensions import babel, csrf, db, limiter, login_manager, migrate
+from .themes import THEMES
 from .utils.dates import format_date, month_label
 from .utils.money import format_eur
 
@@ -267,6 +268,7 @@ def _register_hooks(app: Flask) -> None:
             extra["person_options"] = person_options()
         return {
             **extra,
+            "themes": THEMES,
             "app_name": APP_NAME,
             "app_version": app.config["APP_VERSION"],
             "nav_items": nav,

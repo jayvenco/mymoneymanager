@@ -84,7 +84,7 @@
     <p class="ml-auto self-center text-sm text-slate-500"><span class="num">{{ params.period.start|datum }}</span> t/m <span class="num">{{ params.period.end|datum }}</span>
       {% if params.compare_period %}<br class="sm:hidden"><span class="hidden sm:inline">· vs </span><span class="num">{{ params.compare_period.start|datum }} t/m {{ params.compare_period.end|datum }}</span>{% endif %}</p>
   </form>
-  <nav class="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1" aria-label="Rapporten">
+  <nav class="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1" aria-label="Rapporten">
     {% for key, label in tabs %}
       {% set href = url_for('reports.overview', **query) if key == 'overview' else url_for('reports.show', slug=key, **query) %}
       <a href="{{ href }}" class="shrink-0 rounded-full px-4 py-2 text-sm font-medium {{ 'bg-brand-700 text-white' if slug == key else 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800' }}" {% if slug == key %}aria-current="page"{% endif %}>{{ label }}</a>

@@ -5,6 +5,7 @@ Alle noemenswaardige wijzigingen staan hier. Formaat: [Keep a Changelog](https:/
 ## [Unreleased]
 
 ### Toegevoegd
+- Vijf thema's: Wit, Donker, Oceaan, Warm en Middernacht (plus Systeem), te kiezen in de header en onder Profiel.
 - Vinkje *Terugkerende uitgave* met herziening na 6 of 12 maanden, overzicht *Te herzien* en acties (herzien / stop).
 - Automatische back-up standaard maandelijks met 360 dagen bewaartermijn (instelbaar); poort 8708; nieuw logo.
 
