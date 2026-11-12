@@ -97,14 +97,25 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        if connection.dialect.name == "sqlite":
+            # SQLite maakt tabellen bij wijzigingen opnieuw aan (batch). Met foreign keys aan
+            # zou het DROP TABLE dan ON DELETE CASCADE-rijen (bijv. transaction_tag) wissen.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()  # sluit de automatisch gestarte transactie, anders wordt de versie niet bewaard
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
             **conf_args
         )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        try:
+            with context.begin_transaction():
+                context.run_migrations()
+        finally:
+            if connection.dialect.name == "sqlite":
+                # De verbinding gaat terug de pool in: foreign keys weer aan voor normaal gebruik.
+                connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+                connection.commit()
 
 
 if context.is_offline_mode():

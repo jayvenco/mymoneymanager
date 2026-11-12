@@ -233,10 +233,6 @@ class Transaction(db.Model):
 
     __table_args__ = (
         CheckConstraint("amount_cents > 0", name="ck_tx_amount_positive"),
-        CheckConstraint(
-            "review_months IS NULL OR (review_months IN (6, 12) AND type = 'expense')",
-            name="ck_tx_review_months",
-        ),
         CheckConstraint("type IN ('income','expense','transfer')", name="ck_tx_type"),
         CheckConstraint(
             "(type = 'transfer' AND to_account_id IS NOT NULL AND to_account_id != account_id)"

@@ -188,3 +188,53 @@ def test_migration_adds_columns(tmp_path):
         cols = {c["name"] for c in inspect(db.engine).get_columns("transaction")}
         assert {"review_months", "review_checked_on"} <= cols
         db.engine.dispose()
+
+
+def test_migration_keeps_existing_data(tmp_path):
+    """Een upgrade mag geen gegevens kwijtraken (bijv. tag-koppelingen via ON DELETE CASCADE)."""
+    import sqlite3
+
+    from flask_migrate import upgrade
+
+    from app import create_app
+
+    app = create_app(
+        {
+            "SECRET_KEY": "t",
+            "DATA_DIR": tmp_path / "d",
+            "BACKUP_DIR": tmp_path / "b",
+            "TESTING": True,
+        }
+    )
+    with app.app_context():
+        upgrade(revision="b120f2c6d5df")
+        db.engine.dispose()
+        path = tmp_path / "d" / "mymoneymanager.db"
+        con = sqlite3.connect(path)
+        con.executescript(
+            """
+            insert into household(id,name,financial_month_start_day,created_at) values(1,'h',1,'2026-01-01');
+            insert into account(id,household_id,name,bank,iban_last4,type,visibility,opening_balance_cents,opening_date,color,icon,is_archived,sort_order)
+              values(1,1,'a','','','checking','shared',0,'2026-01-01','#000','w',0,0);
+            insert into category(id,household_id,name,kind,color,icon,is_archived,sort_order,is_system,exclude_from_reports,is_one_off)
+              values(1,1,'c','expense','#000','t',0,0,0,0,0);
+            insert into tag(id,household_id,name,color) values(1,1,'t','#000');
+            insert into recurring_rule(id,household_id,name,type,amount_cents,account_id,description,payee,notes,tag_ids_json,frequency,interval,next_date,auto_create,is_active)
+              values(1,1,'r','expense',100,1,'','','','[]','monthly',1,'2026-02-01',0,1);
+            insert into "transaction"(id,household_id,date,amount_cents,type,account_id,category_id,description,payee,notes,recurring_rule_id,created_at,updated_at)
+              values(1,1,'2026-01-02',100,'expense',1,1,'x','','',1,'2026-01-02','2026-01-02');
+            insert into transaction_tag values(1,1);
+            """
+        )
+        con.commit()
+        con.close()
+        upgrade()
+        con = sqlite3.connect(path)
+        assert con.execute("select count(*) from transaction_tag").fetchone()[0] == 1
+        assert con.execute('select recurring_rule_id from "transaction"').fetchone()[0] == 1
+        assert {c[1] for c in con.execute('pragma table_info("transaction")')} >= {
+            "review_months",
+            "review_checked_on",
+        }
+        con.close()
+        db.engine.dispose()
