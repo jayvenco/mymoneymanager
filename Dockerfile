@@ -13,7 +13,7 @@ COPY app/static/js app/static/js
 RUN npm run build
 
 # ---- Stage 2: runtime (zonder Node) ----
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ARG APP_VERSION=dev
 ARG GIT_SHA=unknown
